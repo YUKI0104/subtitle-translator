@@ -365,6 +365,7 @@ header h1 .tag {
   </div>
   <div class="header-actions">
     <button class="btn btn-success" id="btnExport" onclick="openExportModal()" disabled>💾 导出</button>
+    <button class="btn" onclick="createNewProject()">✨ 新建项目</button>
     <button class="btn" onclick="openProjectFromFolder()">📂 打开项目</button>
     <button class="btn" onclick="createProjectInFolder()">💾 另存到文件夹</button>
     <button class="btn" onclick="openSettings()">⚙️ 设置</button>
@@ -1308,6 +1309,12 @@ function loadVideoFromFolder(relPath) {
   return true;
 }
 
+// Extract leading number from episode name for natural sorting
+function extractNumber(name) {
+  const m = name.match(/(\d+)/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
 async function importFolder() {
   let dirHandle;
   try { dirHandle = await window.showDirectoryPicker(); }
@@ -1397,8 +1404,12 @@ async function importFolder() {
     if (videoRelPath) videoMatch++;
   }
 
-  // Sort episodes by natural number order (EP1 < EP2 < EP10)
-  proj.episodes.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+  // Sort episodes by natural number order (EP1 < EP2 < EP10 < EP100)
+  proj.episodes.sort((a, b) => {
+    const na = extractNumber(a.name), nb = extractNumber(b.name);
+    if (na !== null && nb !== null && na !== nb) return na - nb;
+    return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+  });
 
   if (!count && !updated) { toast('未能解析任何字幕文件', 'error'); return; }
   state.activeEpisodeIdx = proj.episodes.findIndex(ep => ep.status === 'new'|| ep.status === 'editing');
@@ -1437,6 +1448,12 @@ async function openProjectFromFolder() {
   proj.sourceLang = data.sourceLang || 'auto';
   proj.targetLang = data.targetLang || 'Simplified Chinese';
   proj.episodes = data.episodes || [];
+  // Sort episodes by natural order
+  proj.episodes.sort((a, b) => {
+    const na = extractNumber(a.name), nb = extractNumber(b.name);
+    if (na !== null && nb !== null && na !== nb) return na - nb;
+    return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+  });
   proj.glossary = data.glossary || [];
   if (data.phase) state.phase = data.phase;
   state.activeEpisodeIdx = data.activeEpisodeIdx ?? 0;
@@ -1450,6 +1467,24 @@ async function openProjectFromFolder() {
     loadVideoFromFolder(firstEp.videoFile);
   }
   toast(`📂 已打开项目: ${proj.name}（${proj.episodes.length} 集）`, 'success');
+}
+
+function createNewProject() {
+  if (!confirm('创建一个新的空白项目？当前项目数据会保留在 localStorage 中。')) return;
+  state.projects.push({
+    id: 'proj_'+Date.now(), name: '新项目 ' + new Date().toLocaleDateString('zh-CN'),
+    sourceLang: 'auto', targetLang: 'Simplified Chinese',
+    episodes: [], glossary: [],
+    createdAt: Date.now(),
+  });
+  state.activeProjectIdx = state.projects.length - 1;
+  state.activeEpisodeIdx = -1;
+  state.phase = 'editing';
+  _projectDirHandle = null;
+  state.currentSubIdx = -1;
+  markDirty();
+  renderAll();
+  toast('✨ 已创建新项目', 'success');
 }
 
 async function createProjectInFolder() {
