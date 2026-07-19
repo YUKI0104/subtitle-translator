@@ -1310,9 +1310,23 @@ function loadVideoFromFolder(relPath) {
 }
 
 // Extract leading number from episode name for natural sorting
+// Supports Arabic numerals (EP1, 第1集) and Chinese numerals (第一集, 第一章)
 function extractNumber(name) {
-  const m = name.match(/(\d+)/);
-  return m ? parseInt(m[1], 10) : null;
+  const hanMap = { '一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10,'零':0 };
+  const arabic = name.match(/(\d+)/);
+  if (arabic) return parseInt(arabic[1], 10);
+  // Try Chinese numeral: match "第X集", "第X章", "X." etc.
+  const han = name.match(/([一二三四五六七八九十零]+)/);
+  if (han) {
+    let n = 0;
+    for (const ch of han[1]) n = n * 10 + (hanMap[ch] || 0);
+    return n;
+  }
+  // Try single digit Chinese characters alone
+  for (const [ch, val] of Object.entries(hanMap)) {
+    if (name.includes(ch)) return val;
+  }
+  return null;
 }
 
 async function importFolder() {
