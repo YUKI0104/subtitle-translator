@@ -1612,7 +1612,7 @@ function renderSubtitles() {
       const srcDisplay = hasFx ? tagToPlaceholder(s.text) : s.text;
       const srcHtml = hasFx ? renderTagHtml(escHtml(srcDisplay), tags) : escHtml(s.text);
       // Target display: {tN} as non-editable chips
-      const tgtPre = hasFx && !s.translation ? tagToPlaceholder(s.text) : '';
+      const tgtPre = ''; // Don't pre-fill translation for effect tags
       const tgtRaw = s.translation ? s.translation : tgtPre;
       const tgtHtml = tgtRaw ? (hasFx ? renderChipHtml(escHtml(tgtRaw), tags) : escHtml(tgtRaw)) : '';
       tr.innerHTML = `
