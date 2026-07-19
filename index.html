@@ -1327,7 +1327,26 @@ async function importFolder() {
   }
   const proj = activeProject();
   proj.name = dirHandle.name;
-  let count = 0, videoMatch = 0;
+
+  // Check for duplicate import (same sourceFile already exists)
+  const existingSrcMap = {};
+  proj.episodes.forEach(ep => { if (ep.sourceFile) existingSrcMap[ep.sourceFile] = ep; });
+  const hasDup = subFiles.some(sf => existingSrcMap[sf.relPath]);
+  let mode = 'import'; // 'import' | 'overwrite' | 'relink'
+  if (hasDup) {
+    const choice = prompt(
+      '检测到该文件夹已有部分字幕导入过，请选择：\n' +
+      '  1 → 覆盖（重新解析所有匹配的字幕，保留新增）\n' +
+      '  2 → 仅更新视频链接（不改变已翻译内容）\n' +
+      '  其他 → 取消导入\n' +
+      '请输入 1 或 2：'
+    );
+    if (choice === '1') mode = 'overwrite';
+    else if (choice === '2') mode = 'relink';
+    else { toast('已取消导入', 'info'); return; }
+  }
+
+  let count = 0, videoMatch = 0, updated = 0;
   for (const sf of subFiles) {
     let content;
     try { content = await readFileAsText(sf.file); } catch(e) { continue; }
@@ -1339,6 +1358,30 @@ async function importFolder() {
     }
     const base = sf.name.replace(/\.[^.]+$/, '');
     const videoRelPath = videoMap[base.toLowerCase()] || '';
+
+    if (mode === 'overwrite' && existingSrcMap[sf.relPath]) {
+      // Overwrite existing episode
+      const ep = existingSrcMap[sf.relPath];
+      ep.name = base;
+      ep.subtitles = parsed;
+      ep.format = isASS ? 'ass' : 'srt';
+      ep.rawSource = isASS ? content : null;
+      ep.videoFile = videoRelPath || ep.videoFile;
+      updated++;
+      if (videoRelPath) videoMatch++;
+      continue;
+    }
+    if (mode === 'relink' && existingSrcMap[sf.relPath]) {
+      // Only update video link
+      if (videoRelPath) {
+        existingSrcMap[sf.relPath].videoFile = videoRelPath;
+        videoMatch++;
+      }
+      updated++;
+      continue;
+    }
+
+    // New episode (no conflict)
     const ep = {
       id: 'ep_' + Date.now() + '_' + count,
       name: base,
@@ -1353,8 +1396,13 @@ async function importFolder() {
     count++;
     if (videoRelPath) videoMatch++;
   }
-  if (!count) { toast('未能解析任何字幕文件', 'error'); return; }
-  state.activeEpisodeIdx = proj.episodes.length - count;
+
+  // Sort episodes by natural number order (EP1 < EP2 < EP10)
+  proj.episodes.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+
+  if (!count && !updated) { toast('未能解析任何字幕文件', 'error'); return; }
+  state.activeEpisodeIdx = proj.episodes.findIndex(ep => ep.status === 'new'|| ep.status === 'editing');
+  if (state.activeEpisodeIdx < 0) state.activeEpisodeIdx = 0;
   state.currentSubIdx = -1;
   markDirty();
   renderAll();
@@ -1365,7 +1413,11 @@ async function importFolder() {
   }
   // Save project.json to folder
   saveProjectToFolder();
-  toast(`📁 已导入 ${count} 个字幕文件${videoMatch ? '，'+videoMatch+' 个匹配了视频' : ''}`, 'success');
+  const parts = [];
+  if (count) parts.push('新增 '+count+' 集');
+  if (updated) parts.push('更新 '+updated+' 集');
+  if (videoMatch) parts.push(videoMatch+' 个匹配视频');
+  toast('📁 导入完成：'+parts.join('，'), 'success');
 }
 
 async function openProjectFromFolder() {
