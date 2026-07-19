@@ -224,8 +224,16 @@ header h1 .tag {
 .cell-chars { font-family:var(--mono); font-size:10px; color:var(--text-dim); line-height:1.5; }
 .cell-style { font-size:10px; line-height:1.5; color:var(--text-dim); white-space:nowrap; text-align:center; }
 .fx-badge { display:inline-block; font-size:8px; padding:1px 4px; border-radius:999px; background:rgba(59,130,246,0.15); color:#60a5fa; margin-left:4px; letter-spacing:.3px; }
-.tag-ph { display:inline; color:var(--accent); font-family:var(--mono); background:rgba(59,130,246,0.1); border-radius:3px; padding:0 2px; cursor:help; }
-.tag-chip { display:inline-block; font-family:var(--mono); font-size:10px; color:var(--accent); background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.25); border-radius:4px; padding:0 3px; cursor:default; }
+.tag-ph { display:inline; color:var(--accent); font-family:var(--mono); background:rgba(59,130,246,0.1); border-radius:3px; padding:0 2px; cursor:help; white-space:nowrap; }
+.tag-chip {
+  display:inline-flex; align-items:center; gap:1px;
+  font-family:var(--mono); font-size:10px;
+  color:#fff; background:rgba(59,130,246,0.25);
+  border:1px solid rgba(59,130,246,0.4);
+  border-radius:4px; padding:0 4px; cursor:default; user-select:none;
+  line-height:1.4;
+  vertical-align:middle;
+}
 .tag-popup { position:fixed; z-index:1000; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); padding:4px; min-width:120px; box-shadow:0 8px 24px rgba(0,0,0,0.4); font-size:12px; }
 .tag-popup-item { padding:5px 10px; cursor:pointer; border-radius:8px; transition:background .15s; display:flex; align-items:center; gap:6px; }
 .tag-popup-item.selected { background:rgba(59,130,246,0.2); color:#60a5fa; }
@@ -950,25 +958,28 @@ function extractTags(text) {
 }
 function tagToPlaceholder(text) {
   let i = 0;
-  return text.replace(/\{[^}]*\}/g, () => `{T${++i}}`);
+  return text.replace(/\{[^}]*\}/g, () => `T${++i}`);
 }
 function placeholderToTag(text, tags) {
-  return text.replace(/\{T(\d+)\}/g, (_, n) => tags[parseInt(n)-1]||'');
+  return text.replace(/\{T(\d+)\}|\bT(\d+)\b/g, (_, old, nu) => {
+    const idx = parseInt(old || nu) - 1;
+    return tags[idx] || '';
+  });
 }
 function renderTagHtml(text, tags) {
-  // Source column: styled {TN} with tooltip, non-editable
-  return text.replace(/\{T(\d+)\}/g, (_, n) => {
-    const idx = parseInt(n)-1;
+  // Source column: styled TN + 🏷️ icon with tooltip, non-editable
+  return text.replace(/\{T(\d+)\}|\bT(\d+)\b/g, (_, old, nu) => {
+    const idx = parseInt(old || nu) - 1;
     const orig = tags && tags[idx] ? escHtml(tags[idx]) : '';
-    return `<span class="tag-ph" title="${orig}">{T${n}}</span>`;
+    return `<span class="tag-ph" title="${orig}">🏷️T${old||nu}</span>`;
   });
 }
 function renderChipHtml(text, tags) {
-  // Translation column: non-editable chips for {TN}
-  return text.replace(/\{T(\d+)\}/g, (_, n) => {
-    const idx = parseInt(n)-1;
+  // Translation column: non-editable chips for TN
+  return text.replace(/\{T(\d+)\}|\bT(\d+)\b/g, (_, old, nu) => {
+    const idx = parseInt(old || nu) - 1;
     const orig = tags && tags[idx] ? escHtml(tags[idx]) : '';
-    return `<span class="tag-chip" contenteditable="false" title="${orig}">{T${n}}</span>`;
+    return `<span class="tag-chip" contenteditable="false" title="${orig}">🏷️T${old||nu}</span>`;
   });
 }
 let activeTagPopup = null;
@@ -999,7 +1010,7 @@ function showTagPopup(ta, subIdx) {
   for (let i = 0; i < tags.length; i++) {
     const item = document.createElement('div');
     item.className = 'tag-popup-item';
-    item.innerHTML = `<span style="font-family:var(--mono);color:var(--accent)">t${i+1}</span><span class="orig-tag">${escHtml(tags[i])}</span>`;
+    item.innerHTML = `<span style="font-family:var(--mono);color:var(--accent)">🏷️T${i+1}</span><span class="orig-tag">${escHtml(tags[i])}</span>`;
     item.dataset.n = i + 1;
     item.onclick = (e) => { e.stopPropagation(); insertTagAtCursor(ta, parseInt(item.dataset.n)); };
     wrap.appendChild(item);
@@ -1022,7 +1033,7 @@ function insertTagAtCursor(ta, tagNum) {
     const tags = activeTagPopup ? activeTagPopup.tags : [];
     const orig = tags[tagNum-1] || '';
     span.title = orig;
-    span.textContent = `{T${tagNum}}`;
+    span.textContent = `T${tagNum}`;
     range.insertNode(span);
     range.setStartAfter(span);
     range.collapse(true);
@@ -1063,7 +1074,7 @@ function isCJK(lang) {
 }
 function getCharCount(text, lang) {
   if (!text) return 0;
-  const clean = text.replace(/\{[^}]*\}/g,'').replace(/\{T\d+\}/g,'');
+  const clean = text.replace(/\{[^}]*\}/g,'').replace(/\{?T\d+\}?/g,'');
   const lines = clean.split('\n');
   const maxLen = Math.max(...lines.map(line => {
     const t = line.trim();
@@ -2089,7 +2100,7 @@ async function translateAll() {
 
       const prompt = [
         `你是一个专业的影视字幕翻译专家。请${sourceText}翻译成${targetLang}。`,
-        `严格遵循：1.保持行号[N] 2.口语化、自然，符合影视对白风格 3.保留语气词 4.人名专有名词保留原文 5.短剧角色台词口语化处理 6.每行只输出 [N]译文 7.如果原文含有ASS标签{\\fn...}等，用{T1}{T2}占位符代替并保留在译文中`,
+        `严格遵循：1.保持行号[N] 2.口语化、自然，符合影视对白风格 3.保留语气词 4.人名专有名词保留原文 5.短剧角色台词口语化处理 6.每行只输出 [N]译文 7.如果原文含有ASS标签{\\fn...}等，用T1 T2占位符代替并保留在译文中`,
         glossContext,
         `\n待翻译内容：\n${input}`
       ].filter(Boolean).join('\n');
