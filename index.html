@@ -1,0 +1,2331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>短剧字幕翻译器 · 蒸馏版</title>
+<style>
+:root {
+  --bg: #1a1a2e; --surface: #16213e; --surface2: #1f3056;
+  --border: #2a3a5c; --text: #e0e0e0; --text-dim: #8892a4;
+  --accent: #4fc3f7; --accent2: #7c4dff; --success: #66bb6a;
+  --danger: #ef5350; --warning: #ffa726; --radius: 6px;
+  --font: -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+  --mono: 'SF Mono','Fira Code','Cascadia Code',monospace;
+  --rail-w: 44px; --panel-w: 280px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html,body { height:100%; overflow:hidden; }
+body {
+  font-family: var(--font); background: var(--bg); color: var(--text);
+  display: flex; flex-direction: column; user-select: none;
+}
+/* ─── Header ─── */
+header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 16px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0;
+}
+header h1 { font-size:16px; font-weight:600; display:flex; align-items:center; gap:8px; }
+header h1 .tag {
+  font-size:10px; background:var(--surface2); color:var(--text-dim);
+  padding:1px 6px; border-radius:3px; font-weight:400;
+}
+.header-actions { display:flex; gap:8px; align-items:center; }
+/* ─── Buttons ─── */
+.btn {
+  display:inline-flex; align-items:center; gap:5px; padding:6px 14px;
+  border:1px solid var(--border); border-radius:var(--radius);
+  background:var(--surface2); color:var(--text); font-size:12px;
+  cursor:pointer; transition:all .12s; font-family:var(--font); white-space:nowrap;
+}
+.btn:hover { background:#2a4068; border-color:var(--accent); }
+.btn:active { transform:scale(.97); }
+.btn-primary { background:var(--accent); color:#000; border-color:var(--accent); font-weight:600; }
+.btn-primary:hover { background:#6dd0fa; }
+.btn-primary:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+.btn-success { background:var(--success); color:#000; border-color:var(--success); font-weight:600; }
+.btn-success:hover { background:#81c784; }
+.btn-sm { padding:4px 10px; font-size:11px; }
+.icon-btn { width:32px; height:32px; padding:0; display:inline-flex; align-items:center; justify-content:center; font-size:16px; }
+.rail-btn {
+  width:var(--rail-w); height:40px; border:none; background:transparent;
+  color:var(--text-dim); font-size:18px; cursor:pointer; display:flex;
+  align-items:center; justify-content:center; transition:all .12s; position:relative;
+}
+.rail-btn:hover { color:var(--text); background:rgba(255,255,255,.04); }
+.rail-btn.active { color:var(--accent); }
+.rail-btn.active::before { content:''; position:absolute; left:0; top:6px; bottom:6px; width:2px; background:var(--accent); border-radius:1px; }
+/* ─── Main Layout ─── */
+.main {
+  display:flex; flex:1; min-height:0;
+}
+/* ─── Sidebar Rail ─── */
+.sidebar-rail {
+  width:var(--rail-w); flex-shrink:0; display:flex; flex-direction:column;
+  background:var(--surface); border-right:1px solid var(--border); padding-top:4px;
+}
+/* ─── Sidebar Panel ─── */
+.sidebar-panel {
+  width:var(--panel-w); flex-shrink:0; background:var(--surface);
+  border-right:1px solid var(--border); display:none; flex-direction:column; overflow:hidden;
+}
+.sidebar-panel.open { display:flex; }
+.sidebar-panel .panel-head {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 12px; border-bottom:1px solid var(--border); flex-shrink:0;
+}
+.sidebar-panel .panel-head h3 { font-size:12px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:.8px; }
+.sidebar-panel .panel-body { flex:1; overflow-y:auto; padding:8px; }
+.sidebar-panel .panel-body::-webkit-scrollbar { width:4px; }
+.sidebar-panel .panel-body::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+/* ─── Episodes list ─── */
+.ep-card {
+  padding:10px 12px; border-radius:var(--radius); margin-bottom:6px;
+  background:rgba(255,255,255,.025); border:1px solid var(--border); cursor:pointer;
+  transition:all .12s;
+}
+.ep-card:hover { background:rgba(79,195,247,.05); border-color:var(--accent); }
+.ep-card.active { background:rgba(79,195,247,.1); border-color:var(--accent); }
+.ep-card .ep-name { font-size:13px; font-weight:500; display:flex; align-items:center; gap:8px; }
+.ep-card .ep-meta { font-size:11px; color:var(--text-dim); margin-top:4px; display:flex; gap:12px; }
+.ep-badge { font-size:10px; padding:1px 6px; border-radius:3px; background:var(--surface2); }
+/* ─── Glossary ─── */
+.glossary-search { margin-bottom:8px; }
+.glossary-search input {
+  width:100%; padding:6px 10px; background:var(--bg); border:1px solid var(--border);
+  border-radius:var(--radius); color:var(--text); font-size:12px; font-family:var(--font); outline:none;
+}
+.glossary-search input:focus { border-color:var(--accent); }
+.gl-entry {
+  display:flex; align-items:center; gap:8px; padding:7px 8px; border-bottom:1px solid rgba(255,255,255,.04);
+  font-size:12px; cursor:default;
+}
+.gl-entry:hover { background:rgba(255,255,255,.02); }
+.gl-entry .src { color:var(--text-dim); flex:1; }
+.gl-entry .tgt { color:var(--text); flex:1; }
+.gl-entry .type-tag {
+  font-size:9px; padding:1px 5px; border-radius:3px; opacity:.8;
+}
+.type-tag.character { background:rgba(79,195,247,.2); color:var(--accent); }
+.type-tag.place { background:rgba(255,167,38,.2); color:var(--warning); }
+.type-tag.object { background:rgba(102,187,106,.2); color:var(--success); }
+.type-tag.other { background:rgba(136,146,164,.2); color:var(--text-dim); }
+.gl-entry .del-btn {
+  opacity:0; background:none; border:none; color:var(--danger); cursor:pointer; font-size:14px; padding:2px;
+}
+.gl-entry:hover .del-btn { opacity:1; }
+/* ─── Tools panel ─── */
+.tool-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.tool-card {
+  padding:16px 12px; border-radius:var(--radius); border:1px solid var(--border);
+  text-align:center; cursor:pointer; transition:all .12s; background:rgba(255,255,255,.02);
+}
+.tool-card:hover { border-color:var(--accent); background:rgba(79,195,247,.05); }
+.tool-card .icon { font-size:24px; margin-bottom:6px; }
+.tool-card .name { font-size:11px; color:var(--text-dim); }
+/* ─── Content Area ─── */
+.content-area {
+  flex:1; display:flex; flex-direction:column; min-width:0;
+}
+/* ─── Toolbar ─── */
+.toolbar {
+  display:flex; align-items:center; gap:8px; padding:8px 14px;
+  background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; flex-wrap:wrap;
+}
+.toolbar .sep { width:1px; height:22px; background:var(--border); flex-shrink:0; }
+.file-label { font-size:11px; color:var(--text-dim); max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* ─── Phase selector ─── */
+.phase-select {
+  padding:4px 8px; font-size:11px; font-family:var(--font); background:var(--surface2);
+  border:1px solid var(--border); border-radius:4px; color:var(--text); cursor:pointer; outline:none;
+}
+.phase-select:focus { border-color:var(--accent); }
+/* ─── Phase Steps ─── */
+.phase-steps { display:flex; align-items:center; gap:0; flex-shrink:0; }
+.phase-steps .step {
+  display:flex; align-items:center; gap:5px; padding:3px 8px; cursor:pointer;
+  opacity:.35; transition:all .15s; user-select:none; border-radius:4px;
+}
+.phase-steps .step.active { opacity:1; }
+.phase-steps .step.completed { opacity:.65; }
+.phase-steps .step:hover { opacity:.85; background:rgba(255,255,255,.04); }
+.phase-steps .step.active:hover { opacity:1; background:transparent; cursor:default; }
+.phase-steps .step-circle {
+  width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:9px; font-weight:700; flex-shrink:0;
+  background:var(--surface2); border:2px solid var(--border); color:var(--text-dim);
+  transition:all .2s;
+}
+.phase-steps .step.active .step-circle {
+  background:var(--accent); border-color:var(--accent); color:#000;
+  box-shadow:0 0 8px rgba(79,195,247,.3);
+}
+.phase-steps .step.completed .step-circle {
+  background:var(--success); border-color:var(--success); color:#000; font-size:10px;
+}
+.phase-steps .step-label { font-size:11px; white-space:nowrap; }
+.phase-steps .step-connector {
+  width:22px; height:2px; background:var(--border); flex-shrink:0; transition:background .2s;
+}
+.phase-steps .step-connector.completed { background:var(--success); }
+.phase-steps .step-connector.active { background:var(--accent); }
+/* ─── Search ─── */
+.search-wrap { display:flex; align-items:center; position:relative; }
+.search-wrap input {
+  width:160px; padding:5px 10px; background:var(--bg); border:1px solid var(--border);
+  border-radius:4px; color:var(--text); font-size:12px; font-family:var(--font); outline:none;
+  transition:border-color .12s;
+}
+.search-wrap input:focus { border-color:var(--accent); width:220px; }
+.search-wrap input::placeholder { color:var(--text-dim); opacity:.5; }
+/* ─── Subtitle Panel ─── */
+.subtitle-panel {
+  flex:1; display:flex; flex-direction:column; min-height:0;
+}
+.panel-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:6px 14px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0;
+}
+.panel-header h2 { font-size:12px; font-weight:600; }
+.panel-header .count { font-size:11px; color:var(--text-dim); }
+/* ─── CAT Table ─── */
+.cat-table-wrap { flex:1; overflow:auto; position:relative; }
+.cat-table-wrap::-webkit-scrollbar { width:6px; height:6px; }
+.cat-table-wrap::-webkit-scrollbar-track { background:transparent; }
+.cat-table-wrap::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+.cat-table { width:100%; border-collapse:collapse; table-layout:fixed; }
+.cat-table thead { position:sticky; top:0; z-index:10; }
+.cat-table thead th {
+  background:var(--surface); padding:6px 8px; font-size:10px; font-weight:600;
+  letter-spacing:.4px; color:var(--text-dim); text-align:left;
+  border-bottom:2px solid var(--border); border-right:1px solid rgba(42,58,92,.25);
+  white-space:nowrap; user-select:none;
+}
+.cat-table thead th:last-child { border-right:none; }
+.cat-table thead th:first-child { padding-left:14px; }
+.cat-table thead th:last-child { padding-right:14px; }
+.cat-table .col-num   { width:34px; min-width:34px; text-align:center; }
+.cat-table .col-time  { width:148px; min-width:148px; }
+.cat-table .col-style { width:auto; }
+.cat-table .col-chars { width:34px; min-width:34px; text-align:center; }
+.cat-table .col-src   { width:auto; }
+.cat-table .col-tgt   { width:auto; }
+.cat-table .col-stat  { width:26px; min-width:26px; text-align:center; }
+.cat-table tbody tr { cursor:pointer; transition:background .08s; }
+.cat-table tbody tr:hover { background:rgba(79,195,247,.04); }
+.cat-table tbody tr.active { background:rgba(79,195,247,.1); outline:1px solid var(--accent); outline-offset:-1px; }
+.cat-table tbody tr { border-bottom:1px solid rgba(42,58,92,.4); }
+.cat-table tbody tr:last-child { border-bottom:none; }
+.cat-table td {
+  padding:5px 8px; vertical-align:top; text-align:left; font-size:12px;
+  border-bottom:1px solid rgba(42,58,92,.35); border-right:1px solid rgba(42,58,92,.2);
+}
+.cat-table td:last-child { border-right:none; }
+.cat-table td:first-child { padding-left:14px; }
+.cat-table td:last-child { padding-right:14px; }
+.cat-table tbody tr:nth-child(even) td { background:rgba(255,255,255,.015); }
+.cat-table tbody tr:hover td { background:rgba(79,195,247,.04); }
+.cat-table tbody tr.active td { background:rgba(79,195,247,.08); }
+.cat-table tbody tr.active .cell-num { color:var(--accent); font-weight:600; }
+.cat-table tbody tr.active .cell-src { color:var(--text); }
+/* ─── Cells ─── */
+.cell-num { font-family:var(--mono); font-size:10px; color:var(--text-dim); line-height:1.5; }
+.cell-time { font-family:var(--mono); font-size:10px; color:var(--text-dim); line-height:1.5; white-space:nowrap; }
+.cat-table tbody tr td:nth-child(4) { text-align:center; }
+.cell-chars { font-family:var(--mono); font-size:10px; color:var(--text-dim); line-height:1.5; }
+.cell-style { font-size:10px; line-height:1.5; color:var(--text-dim); white-space:nowrap; text-align:center; }
+.fx-badge { display:inline-block; font-size:8px; padding:1px 4px; border-radius:2px; background:rgba(124,77,255,.15); color:var(--accent2); margin-left:4px; letter-spacing:.3px; }
+.tag-ph { display:inline; color:#b388ff; font-family:var(--mono); background:rgba(124,77,255,.1); border-radius:2px; padding:0 2px; cursor:help; }
+.tag-chip { display:inline-block; font-family:var(--mono); font-size:10px; color:#b388ff; background:rgba(124,77,255,.12); border:1px solid rgba(124,77,255,.25); border-radius:3px; padding:0 3px; cursor:default; }
+.tag-popup { position:fixed; z-index:1000; background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:4px; min-width:120px; box-shadow:0 4px 16px rgba(0,0,0,.35); font-size:12px; }
+.tag-popup-item { padding:5px 10px; cursor:pointer; border-radius:4px; transition:background .1s; display:flex; align-items:center; gap:6px; }
+.tag-popup-item.selected { background:rgba(124,77,255,.25); color:#d0b0ff; }
+.tag-popup-item:hover { background:rgba(124,77,255,.15); color:var(--accent2); }
+.tag-popup-item .orig-tag { color:var(--text-dim); font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:120px; text-align:right; }
+.tag-popup-empty { padding:10px; color:var(--text-dim); font-size:11px; text-align:center; }
+.cell-chars.over { color:var(--danger); font-weight:600; }
+.cat-table.size-11 td { font-size:11px; }
+.cat-table.size-12 td { font-size:12px; }
+.cat-table.size-13 td { font-size:13px; }
+.cat-table.size-14 td { font-size:14px; }
+.cell-src { color:var(--text-dim); line-height:1.5; word-break:break-word; white-space:pre-wrap; overflow-wrap:break-word; min-height:1.5em; font-size:12px; }
+.cell-tgt {
+  font-size:12px; line-height:1.5; color:#fff; min-width:60px; min-height:1.5em;
+  word-break:break-word; white-space:pre-wrap; overflow-wrap:break-word; cursor:text; outline:none;
+}
+.cell-tgt:focus-within { background:rgba(79,195,247,.08); box-shadow:inset 2px 0 0 var(--accent); }
+.cell-tgt:empty::before { content:"点击编辑"; color:var(--text-dim); opacity:.25; pointer-events:none; font-size:11px; }
+.cell-stat { text-align:center; padding-top:8px; font-size:12px; }
+.stat-dot {
+  display:inline-block; width:6px; height:6px; border-radius:50%;
+  transition:all .2s; cursor:pointer; vertical-align:middle;
+}
+.stat-dot.empty { background:var(--text-dim); opacity:.25; }
+.stat-dot.draft { background:var(--warning); }
+.stat-dot.confirmed { background:var(--success); box-shadow:0 0 4px rgba(102,187,106,.4); }
+.stat-dot.warning { background:var(--danger); animation:dot-pulse .6s ease-in-out infinite alternate; }
+.stat-dot.translating { background:var(--warning); animation:dot-pulse .6s ease-in-out infinite alternate; }
+@keyframes dot-pulse { from { opacity:.4; transform:scale(.7); } to { opacity:1; transform:scale(1.1); } }
+/* ─── Empty State ─── */
+.empty-state {
+  position:absolute; inset:0; z-index:20; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:10px; color:var(--text-dim);
+  padding:40px; text-align:center; background:var(--bg);
+}
+.empty-state .icon { font-size:56px; opacity:.15; }
+.empty-state h3 { font-size:15px; font-weight:500; }
+.empty-state p { font-size:12px; max-width:340px; line-height:1.6; opacity:.7; }
+.empty-state.hidden { display:none; }
+/* ─── Video ─── */
+.video-panel { flex:0 0 auto; display:flex; flex-direction:column; background:#000; border-left:1px solid var(--border); height:100%; min-width:100px; }
+.video-panel .video-wrapper { flex:1; background:#000; min-height:0; position:relative; display:flex; align-items:center; justify-content:center; }
+.video-panel video { display:block; width:100%; height:100%; object-fit:contain; background:#000; cursor:pointer; }
+.video-controls { flex-shrink:0; height:40px; display:flex; align-items:center; gap:4px; padding:0 8px; background:var(--surface); }
+.video-controls .btn-sm { font-size:11px; padding:3px 8px; }
+.video-controls input[type=range] { flex:1; height:3px; -webkit-appearance:none; appearance:none; background:var(--border); border-radius:2px; outline:none; }
+.video-controls input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:10px; height:10px; border-radius:50%; background:var(--accent); cursor:pointer; }
+.video-controls .time { font-size:11px; color:var(--text-dim); font-family:var(--mono); min-width:80px; }
+.sub-overlay {
+  position:absolute; inset:0; z-index:2;
+  pointer-events:none; padding:0 20px;
+  font-size:24px;
+  white-space:pre-wrap; word-break:break-word;
+  transition:opacity .15s;
+}
+.sub-overlay > div { position:relative; }
+.video-panel .drop-zone {
+  position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:10px; color:var(--text-dim); z-index:1; pointer-events:none; background:#000;
+}
+.video-panel .drop-zone .icon { font-size:40px; opacity:.2; }
+.video-panel .drop-zone.hidden { display:none; }
+.video-panel.has-video .drop-zone { display:none; }
+/* ─── Status Bar ─── */
+.status-bar {
+  display:flex; align-items:center; gap:16px; padding:5px 14px; flex-shrink:0;
+  background:var(--surface); border-top:1px solid var(--border); font-size:11px; color:var(--text-dim);
+}
+.status-bar .sb-item { display:flex; align-items:center; gap:4px; }
+.status-bar .sb-dot { display:inline-block; width:5px; height:5px; border-radius:50%; }
+.sb-dot.idle { background:var(--text-dim); opacity:.3; }
+.sb-dot.saving { background:var(--warning); animation:dot-pulse .4s ease-in-out infinite alternate; }
+.sb-dot.saved { background:var(--success); }
+/* ─── Settings Modal ─── */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.4); display:flex;
+  align-items:center; justify-content:center; z-index:100; opacity:0; pointer-events:none; transition:opacity .15s;
+}
+.modal-overlay.open { opacity:1; pointer-events:auto; }
+.modal {
+  background:var(--bg); padding:24px 28px; width:400px; max-width:90vw; border:1px solid var(--border);
+}
+.modal h2 { font-size:15px; font-weight:600; margin-bottom:20px; }
+.modal .field { margin-bottom:4px; display:flex; align-items:center; gap:10px; }
+.modal .field label { font-size:12px; color:var(--text-dim); width:90px; flex-shrink:0; text-align:right; }
+.modal .field input,.modal .field select {
+  flex:1; min-width:0; padding:5px 0; background:transparent; border:none;
+  border-bottom:1px solid var(--border); color:var(--text); font-size:12px; font-family:var(--font); outline:none;
+}
+.modal .field input:focus,.modal .field select:focus { border-bottom-color:var(--accent); }
+.modal .field input { font-family:var(--mono); }
+/* Settings sections */
+.ssec { margin-bottom:4px; }
+.ssec-title {
+  font-size:12px; font-weight:600; color:var(--accent); padding:10px 0 6px;
+  border-bottom:1px solid rgba(42,58,92,.25); margin-bottom:8px;
+}
+.ssec-body { padding-left:0; }
+.modal .actions { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; padding-top:12px; border-top:1px solid var(--border); }
+/* ─── Glossary Add Modal ─── */
+.add-glossary .type-select { display:flex; gap:8px; margin:8px 0; }
+.add-glossary .type-opt {
+  padding:4px 10px; border:1px solid var(--border); border-radius:4px; font-size:11px; cursor:pointer; background:transparent; color:var(--text-dim);
+}
+.add-glossary .type-opt.selected { border-color:var(--accent); color:var(--accent); background:rgba(79,195,247,.1); }
+/* ─── Export Modal ─── */
+.export-opt-group { margin-bottom:16px; }
+.export-opt-group .group-label { font-size:11px; color:var(--text-dim); margin-bottom:6px; text-transform:uppercase; letter-spacing:.6px; }
+.export-opts { display:flex; gap:8px; flex-wrap:wrap; }
+.export-opt {
+  padding:6px 14px; border:1px solid var(--border); border-radius:var(--radius); font-size:12px;
+  cursor:pointer; background:transparent; color:var(--text-dim); transition:all .12s;
+}
+.export-opt:hover { border-color:var(--accent); color:var(--text); }
+.export-opt.selected { border-color:var(--accent); color:var(--accent); background:rgba(79,195,247,.1); }
+/* ─── Progress ─── */
+.progress-bar { position:fixed; top:0; left:0; right:0; height:2px; z-index:200; background:var(--border); display:none; }
+.progress-bar.active { display:block; }
+.progress-bar .fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); width:0%; transition:width .3s; animation:progress-pulse 1.5s ease-in-out infinite; }
+@keyframes progress-pulse { 0%,100%{opacity:1} 50%{opacity:.6} }
+/* ─── Toast ─── */
+.toast {
+  position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(80px);
+  padding:8px 20px; border-radius:6px; font-size:12px; z-index:300; opacity:0;
+  transition:all .3s; pointer-events:none; background:var(--surface2); border:1px solid var(--border);
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.toast.success { border-color:var(--success); color:var(--success); }
+.toast.error { border-color:var(--danger); color:var(--danger); }
+.toast.info { border-color:var(--accent); color:var(--accent); }
+/* ─── Responsive ─── */
+@media(max-width:900px){
+  .sidebar-panel.open { position:absolute; z-index:50; height:100%; box-shadow:4px 0 20px rgba(0,0,0,.3); }
+  .content-area { position:relative; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"><div class="fill" id="progressFill"></div></div>
+
+<header>
+  <div style="display:flex;align-items:center">
+    <h1>🎬 字幕翻译器 <span class="tag">v0.3 · 蒸馏版</span></h1>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-success" id="btnExport" onclick="openExportModal()" disabled>💾 导出</button>
+    <button class="btn" onclick="openProjectFromFolder()">📂 打开项目</button>
+    <button class="btn" onclick="createProjectInFolder()">💾 另存到文件夹</button>
+    <button class="btn" onclick="openSettings()">⚙️ 设置</button>
+  </div>
+</header>
+
+<div class="main">
+  <!-- Sidebar Rail -->
+  <nav class="sidebar-rail" id="sidebarRail">
+    <button class="rail-btn active" data-tab="episodes" onclick="switchSidebar('episodes')" title="剧集">📋</button>
+    <button class="rail-btn" data-tab="glossary" onclick="switchSidebar('glossary')" title="术语库">📖</button>
+    <button class="rail-btn" data-tab="tools" onclick="switchSidebar('tools')" title="工具">🔧</button>
+  </nav>
+
+  <!-- Sidebar Panel -->
+  <aside class="sidebar-panel open" id="sidebarPanel">
+    <div class="panel-head">
+      <h3 id="panelTitle">剧集</h3>
+      <div id="panelActions" style="display:flex;gap:4px"></div>
+    </div>
+    <div class="panel-body" id="panelBody">
+      <!-- Rendered by JS -->
+    </div>
+  </aside>
+
+  <!-- Content -->
+  <div class="content-area">
+    <div class="toolbar">
+      <button class="btn btn-primary" id="btnTranslate" onclick="translateAll()" disabled>🤖 翻译全部</button>
+      <div class="sep"></div>
+      <div class="phase-steps" id="phaseSteps"></div>
+      <div class="search-wrap">
+        <input type="text" id="searchInput" placeholder="🔍 搜索字幕..." oninput="onSearch()" spellcheck="false">
+      </div>
+      <button class="btn" onclick="jumpToNextEmpty()" title="跳转下一空行 (Cmd+↓)">⏭ 下一空行</button>
+      <div class="sep"></div>
+      <span class="file-label" id="videoLabel">未加载视频</span>
+      <span class="file-label" id="srtLabel">未加载字幕</span>
+    </div>
+
+    <div class="subtitle-panel">
+      <div class="panel-header">
+        <h2>📝 <span id="panelEpName">CAT 表格</span></h2>
+        <span class="count" id="subCount">0 条</span>
+      </div>
+      <div class="cat-table-wrap" id="catTableWrap">
+        <table class="cat-table" id="catTable">
+          <thead>
+            <tr>
+              <th class="col-num">#</th>
+              <th class="col-time">时间轴</th>
+              <th class="col-style">样式</th>
+              <th class="col-chars">长度</th>
+              <th class="col-src">原文</th>
+              <th class="col-tgt">译文</th>
+              <th class="col-stat"></th>
+            </tr>
+          </thead>
+          <tbody id="catBody"></tbody>
+        </table>
+        <div class="empty-state" id="emptyState">
+          <div class="icon">📄</div>
+          <h3>加载字幕文件开始翻译</h3>
+          <p>支持 .srt / .ass 格式。可创建多个剧集管理不同集数。<br>加载后点"翻译全部"，AI自动翻译。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Video Panel -->
+  <div class="video-panel" id="videoPanel">
+    <div class="video-wrapper">
+      <video id="video" preload="auto"></video>
+      <div id="subOverlay" class="sub-overlay" style="display:none"></div>
+      <div class="drop-zone" id="dropZone">
+        <div class="icon">🎬</div>
+        <div style="font-size:14px;font-weight:500">拖拽视频/字幕到此处</div>
+        <div style="font-size:11px">支持 .mp4 .mov .webm / .srt .ass</div>
+      </div>
+    </div>
+    <div class="video-controls">
+      <button class="btn icon-btn" onclick="togglePlay()" id="playBtn">▶</button>
+      <button class="btn btn-sm" onclick="playCurrentSubtitle()" title="播放当前时间轴">▶|</button>
+      <input type="range" id="seekBar" value="0" oninput="seekVideo(this.value)">
+      <span class="time" id="timeDisplay">00:00 / 00:00</span>
+    </div>
+  </div>
+</div>
+
+<!-- Status Bar -->
+<div class="status-bar" id="statusBar">
+  <span class="sb-item" id="sbProject">📁 未选择项目</span>
+  <span class="sb-item" id="sbEpisode">📋 —</span>
+  <span class="sb-item" id="sbCount">📊 0/0</span>
+  <span class="sb-item" id="sbPhase">📌 编辑中</span>
+  <span class="sb-item" id="sbSave" style="margin-left:auto">
+    <span class="sb-dot idle" id="saveDot"></span>
+    <span id="saveText">就绪</span>
+  </span>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal" style="width:520px;max-height:85vh;overflow-y:auto">
+    <h2>⚙️ 软件设置</h2>
+
+    <div class="ssec">
+      <div class="ssec-title">🤖 AI 翻译</div>
+      <div class="ssec-body">
+        <div class="field"><label>API Key</label><input type="password" id="apiKey" placeholder="sk-xxx..."></div>
+        <div class="field"><label>Endpoint</label><input type="text" id="apiEndpoint"></div>
+        <div class="field"><label>模型</label><select id="modelName"><option value="deepseek-chat">deepseek-chat</option><option value="deepseek-reasoner">deepseek-reasoner</option></select></div>
+        <div class="field"><label>源语言</label><select id="sourceLang"><option value="auto">🌐 自动检测</option><optgroup label="东亚"><option>中文</option><option>日语</option><option>韩语</option><option>蒙古语</option><option>藏语</option></optgroup><optgroup label="东南亚"><option>泰语</option><option>越南语</option><option>印尼语</option><option>马来语</option><option>菲律宾语</option><option>缅甸语</option><option>高棉语</option><option>老挝语</option></optgroup><optgroup label="南亚"><option>印地语</option><option>孟加拉语</option><option>泰米尔语</option><option>乌尔都语</option><option>旁遮普语</option><option>僧伽罗语</option><option>尼泊尔语</option></optgroup><optgroup label="中东/西亚"><option>阿拉伯语</option><option>土耳其语</option><option>波斯语</option><option>希伯来语</option><option>库尔德语</option></optgroup><optgroup label="欧洲"><option>英语</option><option>西班牙语</option><option>法语</option><option>德语</option><option>意大利语</option><option>葡萄牙语</option><option>俄语</option><option>荷兰语</option><option>波兰语</option><option>瑞典语</option><option>丹麦语</option><option>挪威语</option><option>芬兰语</option><option>希腊语</option><option>捷克语</option><option>罗马尼亚语</option><option>匈牙利语</option><option>乌克兰语</option><option>塞尔维亚语</option><option>克罗地亚语</option><option>保加利亚语</option><option>斯洛伐克语</option><option>斯洛文尼亚语</option><option>立陶宛语</option><option>拉脱维亚语</option><option>爱沙尼亚语</option></optgroup><optgroup label="非洲"><option>斯瓦希里语</option><option>豪萨语</option><option>祖鲁语</option><option>阿姆哈拉语</option><option>约鲁巴语</option><option>索马里语</option><option>马达加斯加语</option></optgroup></select></div>
+        <div class="field"><label>目标语言</label><select id="targetLang"><option value="Simplified Chinese">简体中文</option><option value="Traditional Chinese">繁体中文</option><option>英语</option><option>日语</option><option>韩语</option><option>泰语</option><option>越南语</option><option>印尼语</option><option>马来语</option><option>菲律宾语</option><option>印地语</option><option>孟加拉语</option><option>泰米尔语</option><option>阿拉伯语</option><option>土耳其语</option><option>波斯语</option><option>西班牙语</option><option>法语</option><option>德语</option><option>意大利语</option><option>葡萄牙语</option><option>俄语</option><option>荷兰语</option><option>波兰语</option><option>瑞典语</option><option>丹麦语</option><option>挪威语</option><option>芬兰语</option><option>希腊语</option><option>捷克语</option><option>罗马尼亚语</option><option>匈牙利语</option><option>乌克兰语</option><option>斯瓦希里语</option><option>豪萨语</option></select></div>
+      </div>
+    </div>
+
+    <div class="ssec">
+      <div class="ssec-title">📝 编辑器</div>
+      <div class="ssec-body">
+        <div class="field"><label>表格字号</label><select id="fontSize"><option value="11">11px</option><option value="12" selected>12px</option><option value="13">13px</option><option value="14">14px</option></select></div>
+        <div class="field"><label>字数上限</label><input type="number" id="charLimit" value="16" min="4" max="99" style="width:60px;font-family:var(--mono)"></div>
+        <div class="field"><label>Tab跳转</label><select id="tabAdvance"><option value="1">开启</option><option value="0">关闭</option></select></div>
+      </div>
+    </div>
+
+    <div class="ssec">
+      <div class="ssec-title">💾 导出</div>
+      <div class="ssec-body">
+        <div class="field"><label>未译处理</label><select id="includeUntranslated"><option value="1">原文填充</option><option value="0">跳过该行</option></select></div>
+        <div class="field"><label>文件名</label><input type="text" id="exportPattern" value="{name}_翻译版" style="font-family:var(--mono);font-size:11px"></div>
+        <div style="font-size:10px;color:var(--text-dim);margin-left:104px;margin-top:-2px">{name}=剧集名 · {project}=项目名 · {lang}=语言</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" onclick="closeSettings()">取消</button>
+      <button class="btn btn-primary" onclick="saveSettings()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Glossary Add Modal -->
+<div class="modal-overlay" id="glossaryModal">
+  <div class="modal">
+    <h2>📖 添加术语</h2>
+    <div class="field"><label>原文</label><input type="text" id="glSrc" placeholder="角色名/地名..."></div>
+    <div class="field"><label>译文</label><input type="text" id="glTgt" placeholder="翻译..."></div>
+    <div class="field" style="align-items:flex-start;margin-top:8px">
+      <label>类型</label>
+      <div class="type-select" id="glTypeSelect">
+        <span class="type-opt selected" data-type="character" onclick="selectGlType(this)">👤 角色</span>
+        <span class="type-opt" data-type="place" onclick="selectGlType(this)">📍 地点</span>
+        <span class="type-opt" data-type="object" onclick="selectGlType(this)">📦 物品</span>
+        <span class="type-opt" data-type="other" onclick="selectGlType(this)">🏷 其他</span>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn" onclick="closeGlossaryModal()">取消</button>
+      <button class="btn btn-primary" onclick="addGlossaryEntry()">添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal" style="width:380px">
+    <h2>💾 导出字幕</h2>
+    <div class="export-opt-group">
+      <div class="group-label">导出内容</div>
+      <div class="export-opts" id="exportContentGroup">
+        <span class="export-opt selected" data-value="translation">译文</span>
+        <span class="export-opt" data-value="bilingual">双语</span>
+        <span class="export-opt" data-value="original">原文</span>
+      </div>
+    </div>
+    <div class="export-opt-group">
+      <div class="group-label">文件格式</div>
+      <div class="export-opts" id="exportFmtGroup">
+        <span class="export-opt selected" data-value="srt">.SRT</span>
+        <span class="export-opt" data-value="ass">.ASS</span>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn" onclick="closeExportModal()">取消</button>
+      <button class="btn btn-success" onclick="confirmExport()">导出</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const APP_VERSION = '2026-07-19';
+
+// ═══════════════════════════════════════════
+//  State
+// ═══════════════════════════════════════════
+const state = {
+  projects: [],
+  activeProjectIdx: -1,
+  activeEpisodeIdx: -1,
+  videoFile: null,
+  srtFile: null,
+  isTranslating: false,
+  sidebarTab: 'episodes',
+  sidebarOpen: true,
+  searchQuery: '',
+  currentSubIdx: -1,
+  phase: 'editing',
+  _saveDirty: false,
+};
+// Phase workflow: 翻译 → 校对 → 审核 → 已提交
+const PHASES = [
+  { id:'editing', label:'翻译', icon:'✏️' },
+  { id:'proofreading', label:'校对', icon:'👁' },
+  { id:'review', label:'审核', icon:'✅' },
+  { id:'submitted', label:'已提交', icon:'📦' },
+];
+const STATUS_LABELS = { empty:'未翻译', draft:'草稿', confirmed:'已确认', warning:'需复核' };
+
+function activeProject() { return state.projects[state.activeProjectIdx]; }
+function activeEpisode() {
+  const p = activeProject();
+  return p ? p.episodes[state.activeEpisodeIdx] : null;
+}
+function currentSubtitles() {
+  const ep = activeEpisode();
+  return ep ? ep.subtitles : [];
+}
+
+// ═══════════════════════════════════════════
+//  Init Default Data
+// ═══════════════════════════════════════════
+function initDefault() {
+  const saved = localStorage.getItem('st_state');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      state.projects = parsed.projects || [];
+      state.activeProjectIdx = parsed.activeProjectIdx ?? -1;
+      state.activeEpisodeIdx = parsed.activeEpisodeIdx ?? -1;
+      state.phase = parsed.phase || 'editing';
+    } catch(e) { /* corrupt, use defaults */ }
+  }
+  if (!state.projects.length) {
+    state.projects.push({
+      id: 'proj_'+Date.now(), name: '默认项目',
+      sourceLang: 'auto', targetLang: 'Simplified Chinese',
+      episodes: [], glossary: [],
+      createdAt: Date.now(),
+    });
+    state.activeProjectIdx = 0;
+  }
+  if (state.activeProjectIdx < 0) state.activeProjectIdx = 0;
+  state.activeEpisodeIdx = Math.min(state.activeEpisodeIdx, (activeProject()?.episodes.length||1)-1);
+  renderAll();
+}
+
+// ═══════════════════════════════════════════
+//  Persistence
+// ═══════════════════════════════════════════
+function saveState() {
+  state._saveDirty = false;
+  setSaveIndicator('saving', '保存中...');
+  try {
+    localStorage.setItem('st_state', JSON.stringify({
+      projects: state.projects,
+      activeProjectIdx: state.activeProjectIdx,
+      activeEpisodeIdx: state.activeEpisodeIdx,
+      phase: state.phase,
+    }));
+    // Also save to project folder if open
+    if (_projectDirHandle) saveProjectToFolder();
+    setTimeout(() => setSaveIndicator('saved', '已保存'), 100);
+  } catch(e) {
+    setSaveIndicator('idle', '保存失败');
+  }
+}
+function markDirty() {
+  if (!state._saveDirty) {
+    state._saveDirty = true;
+    setSaveIndicator('saving', '保存中...');
+    setTimeout(saveState, 500);
+  }
+}
+
+function setSaveIndicator(type, text) {
+  const dot = document.getElementById('saveDot');
+  const txt = document.getElementById('saveText');
+  if (dot) dot.className = 'sb-dot '+type;
+  if (txt) txt.textContent = text;
+}
+
+// ═══════════════════════════════════════════
+//  Sidebar
+// ═══════════════════════════════════════════
+function switchSidebar(tab) {
+  if (state.sidebarTab === tab && state.sidebarOpen) {
+    state.sidebarOpen = false;
+    document.getElementById('sidebarPanel').classList.remove('open');
+    document.querySelectorAll('.rail-btn').forEach(b => b.classList.remove('active'));
+    return;
+  }
+  state.sidebarTab = tab;
+  state.sidebarOpen = true;
+  document.querySelectorAll('.rail-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.getElementById('sidebarPanel').classList.add('open');
+  renderSidebarPanel();
+}
+
+function renderSidebarPanel() {
+  const body = document.getElementById('panelBody');
+  const title = document.getElementById('panelTitle');
+  const actions = document.getElementById('panelActions');
+  if (!body) return;
+
+  switch (state.sidebarTab) {
+    case 'episodes': renderEpisodesPanel(body, title, actions); break;
+    case 'glossary': renderGlossaryPanel(body, title, actions); break;
+    case 'tools': renderToolsPanel(body, title, actions); break;
+  }
+}
+
+function renderEpisodesPanel(body, title, actions) {
+  const proj = activeProject();
+  title.textContent = '剧集';
+  // Populate action buttons
+  actions.innerHTML = '<button class="btn btn-sm" onclick="loadSRT()">+ 加载字幕</button><button class="btn btn-sm" onclick="importFolder()">📁 导入文件夹</button><button class="btn btn-sm" onclick="loadVideo()">📹 加载视频</button>';
+  if (!proj) { body.innerHTML = '<div style="color:var(--text-dim);font-size:12px;padding:12px">暂无项目</div>'; return; }
+
+  let html = `<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px">项目: ${escHtml(proj.name)}</div>`;
+  if (!proj.episodes.length) {
+    html += '<div style="font-size:12px;color:var(--text-dim);padding:20px;text-align:center">暂无剧集<br>点击上方按钮添加</div>';
+  } else {
+    for (let i = 0; i < proj.episodes.length; i++) {
+      const ep = proj.episodes[i];
+      const active = i === state.activeEpisodeIdx ? 'active' : '';
+      const done = ep.subtitles.filter(s => s.translation && s.translation.trim()).length;
+      html += `<div class="ep-card ${active}" onclick="selectEpisode(${i})">
+        <div class="ep-name">${escHtml(ep.name)} <span class="ep-badge">${STATUS_LABELS[ep.status]||ep.status}</span></div>
+        <div class="ep-meta"><span>${ep.subtitles.length} 条字幕</span><span>${done}/${ep.subtitles.length} 已译</span>${ep.videoFile?'<span>🎬</span>':''}</div>
+      </div>`;
+    }
+  }
+  body.innerHTML = html;
+}
+
+function renderGlossaryPanel(body, title, actions) {
+  const proj = activeProject();
+  if (title) title.textContent = '术语库';
+  if (actions) actions.innerHTML = '<button class="btn btn-sm" onclick="openGlossaryModal()">+ 添加</button>';
+  if (!proj) { if (body) body.innerHTML = ''; return; }
+
+  let html = '<div class="glossary-search"><input type="text" placeholder="搜索术语..." oninput="renderGlossarySearch()" id="glSearch" spellcheck="false"></div>';
+  const q = (document.getElementById('glSearch')?.value || '').toLowerCase();
+  const entries = proj.glossary.filter(e => !q || e.source.toLowerCase().includes(q) || e.target.toLowerCase().includes(q));
+
+  if (!entries.length) {
+    html += '<div style="font-size:12px;color:var(--text-dim);padding:20px;text-align:center">暂无术语<br>点击上方"添加"创建</div>';
+  } else {
+    for (const e of entries) {
+      html += `<div class="gl-entry">
+        <span class="src">${escHtml(e.source)}</span>
+        <span style="color:var(--text-dim)">→</span>
+        <span class="tgt">${escHtml(e.target)}</span>
+        <span class="type-tag ${e.type}">${e.type}</span>
+        <button class="del-btn" onclick="deleteGlossaryEntry('${e.id}')" title="删除">✕</button>
+      </div>`;
+    }
+  }
+  body.innerHTML = html;
+}
+
+function renderGlossarySearch() {
+  // Re-render glossary entries only (search triggered)
+  const body = document.getElementById('panelBody');
+  const proj = activeProject();
+  if (!proj || !body) return;
+  const q = (document.getElementById('glSearch')?.value || '').toLowerCase();
+  const entries = proj.glossary.filter(e => !q || e.source.toLowerCase().includes(q) || e.target.toLowerCase().includes(q));
+  let html = '';
+  if (!entries.length) {
+    html = '<div style="font-size:12px;color:var(--text-dim);padding:20px;text-align:center">无匹配术语</div>';
+  } else {
+    for (const e of entries) {
+      html += `<div class="gl-entry">
+        <span class="src">${escHtml(e.source)}</span>
+        <span style="color:var(--text-dim)">→</span>
+        <span class="tgt">${escHtml(e.target)}</span>
+        <span class="type-tag ${e.type}">${e.type}</span>
+        <button class="del-btn" onclick="deleteGlossaryEntry('${e.id}')" title="删除">✕</button>
+      </div>`;
+    }
+  }
+  body.innerHTML = body.innerHTML.split('<div class="glossary-search">')[0] + '<div class="glossary-search"><input type="text" placeholder="搜索术语..." oninput="renderGlossarySearch()" id="glSearch" spellcheck="false"></div>' + html;
+  document.getElementById('glSearch')?.focus();
+}
+
+function renderToolsPanel(body, title, actions) {
+  title.textContent = '工具';
+  actions.innerHTML = '';
+  body.innerHTML = `<div class="tool-grid">
+    <div class="tool-card" onclick="jumpToNextEmpty()"><div class="icon">⏭</div><div class="name">跳转空行</div></div>
+    <div class="tool-card" onclick="translateAll()"><div class="icon">🤖</div><div class="name">AI 翻译</div></div>
+    <div class="tool-card" onclick="doExport()"><div class="icon">💾</div><div class="name">导出字幕</div></div>
+    <div class="tool-card" onclick="openGlossaryModal()"><div class="icon">📖</div><div class="name">添加术语</div></div>
+  </div>`;
+}
+
+function selectEpisode(idx) {
+  state.activeEpisodeIdx = idx;
+  state.currentSubIdx = -1;
+  markDirty();
+  renderAll();
+  updateVideoEnabled();
+  // Sync sidebar
+  document.querySelectorAll('.rail-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === state.sidebarTab);
+  });
+  renderSidebarPanel();
+  // Auto-load episode's associated video if available
+  const ep = activeEpisode();
+  if (ep && ep.videoFile) {
+    if (_projectDirHandle && typeof ep.videoFile === 'string') {
+      loadVideoFromFolder(ep.videoFile);
+    } else if (ep.videoFile instanceof File) {
+      handleVideoFile(ep.videoFile);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════
+//  Glossary
+// ═══════════════════════════════════════════
+let glSelectedType = 'character';
+
+function selectGlType(el) {
+  document.querySelectorAll('.type-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  glSelectedType = el.dataset.type;
+}
+
+function openGlossaryModal() {
+  document.getElementById('glSrc').value = '';
+  document.getElementById('glTgt').value = '';
+  glSelectedType = 'character';
+  document.querySelectorAll('.type-opt').forEach(o => o.classList.toggle('selected', o.dataset.type === 'character'));
+  document.getElementById('glossaryModal').classList.add('open');
+}
+
+function closeGlossaryModal() { document.getElementById('glossaryModal').classList.remove('open'); }
+
+function addGlossaryEntry() {
+  const proj = activeProject();
+  if (!proj) return;
+  const src = document.getElementById('glSrc').value.trim();
+  const tgt = document.getElementById('glTgt').value.trim();
+  if (!src || !tgt) { toast('请填写原文和译文', 'error'); return; }
+  proj.glossary.push({ id: 'gl_'+Date.now(), source: src, target: tgt, type: glSelectedType, freq: 1 });
+  closeGlossaryModal();
+  markDirty();
+  renderSidebarPanel();
+  toast('已添加术语', 'success');
+}
+
+function deleteGlossaryEntry(id) {
+  const proj = activeProject();
+  if (!proj) return;
+  proj.glossary = proj.glossary.filter(e => e.id !== id);
+  markDirty();
+  renderSidebarPanel();
+}
+
+// ═══════════════════════════════════════════
+//  Phase Workflow — 翻译→校对→审核→已提交
+// ═══════════════════════════════════════════
+function renderPhaseSteps() {
+  const container = document.getElementById('phaseSteps');
+  if (!container) return;
+  const curIdx = PHASES.findIndex(p => p.id === state.phase);
+  let html = '';
+  for (let i = 0; i < PHASES.length; i++) {
+    if (i > 0) {
+      const conn = i <= curIdx ? 'completed' : (i-1 === curIdx ? 'active' : '');
+      html += `<div class="step-connector ${conn}"></div>`;
+    }
+    const p = PHASES[i];
+    const isActive = i === curIdx;
+    const isCompleted = i < curIdx;
+    html += `<div class="step ${isActive?'active':''} ${isCompleted?'completed':''} ${!isActive&&!isCompleted?'future':''}" data-idx="${i}" onclick="clickPhase(${i})">
+      <div class="step-circle">${isCompleted ? '✓' : ''}</div>
+      <span class="step-label">${p.label}</span>
+    </div>`;
+  }
+  container.innerHTML = html;
+}
+
+function clickPhase(idx) {
+  const curIdx = PHASES.findIndex(p => p.id === state.phase);
+  if (idx === curIdx) return;
+  if (idx === curIdx + 1) {
+    // Advance one step
+    state.phase = PHASES[idx].id;
+    markDirty();
+    renderPhaseSteps();
+    renderSubtitles();
+    updateStatusBar();
+    toast(`已进入「${PHASES[idx].label}」阶段`, 'success');
+  } else if (idx < curIdx) {
+    // Go back
+    state.phase = PHASES[idx].id;
+    markDirty();
+    renderPhaseSteps();
+    renderSubtitles();
+    updateStatusBar();
+    toast(`已退回「${PHASES[idx].label}」阶段`, 'success');
+  } else {
+    toast(`请按顺序推进：${PHASES.map(p=>p.label).join(' → ')}`, 'error');
+  }
+}
+
+// ═══════════════════════════════════════════
+//  Search
+// ═══════════════════════════════════════════
+function onSearch() {
+  state.searchQuery = document.getElementById('searchInput').value;
+  renderSubtitles();
+}
+
+function getFilteredSubtitles() {
+  const subs = currentSubtitles();
+  if (!state.searchQuery) return subs;
+  const q = state.searchQuery.toLowerCase();
+  return subs.filter(s => s.text.toLowerCase().includes(q) || (s.translation||'').toLowerCase().includes(q));
+}
+
+// ═══════════════════════════════════════════
+//  SRT Parsing
+// ═══════════════════════════════════════════
+function parseSRT(text) {
+  const blocks = text.trim().replace(/\r\n/g,'\n').split(/\n\n+/);
+  const result = [];
+  for (const block of blocks) {
+    const lines = block.split('\n');
+    if (lines.length < 3) continue;
+    const index = parseInt(lines[0],10);
+    if (isNaN(index)) continue;
+    const m = lines[1].match(/(\d{2}):(\d{2}):(\d{2})[,.:](\d{3})\s*-->\s*(\d{2}):(\d{2}):(\d{2})[,.:](\d{3})/);
+    if (!m) continue;
+    const startMs = (+m[1])*3600000+(+m[2])*60000+(+m[3])*1000+(+m[4]);
+    const endMs   = (+m[5])*3600000+(+m[6])*60000+(+m[7])*1000+(+m[8]);
+    const text = lines.slice(2).join('\n');
+    result.push({ index, startMs, endMs, text, translation: '', status: 'empty', styleName: '' });
+  }
+  return result;
+}
+
+function formatTime(ms) {
+  const h=Math.floor(ms/3600000), m=Math.floor((ms%3600000)/60000);
+  const s=Math.floor((ms%60000)/1000), ml=Math.floor(ms%1000);
+  return `${pad(h)}:${pad(m)}:${pad(s)},${pad3(ml)}`;
+}
+function formatTimeShort(ms) {
+  const m=Math.floor(ms/60000), s=Math.floor((ms%60000)/1000);
+  return `${pad(m)}:${pad(s)}`;
+}
+function pad(n) { return String(n).padStart(2,'0'); }
+function pad3(n) { return String(n).padStart(3,'0'); }
+function msToTimecode(ms) {
+  const totalSec=ms/1000, m=Math.floor(totalSec/60), s=Math.floor(totalSec%60), ml=Math.floor(ms%1000);
+  return `${pad(m)}:${pad(s)},${pad3(ml)}`;
+}
+
+// ═══════════════════════════════════════════
+//  ASS Tag ↔ {tN} Placeholder Conversion
+// ═══════════════════════════════════════════
+function extractTags(text) {
+  const tags = []; let m; const re = /\{[^}]*\}/g;
+  while ((m = re.exec(text)) !== null) tags.push(m[0]);
+  return tags;
+}
+function tagToPlaceholder(text) {
+  let i = 0;
+  return text.replace(/\{[^}]*\}/g, () => `{t${++i}}`);
+}
+function placeholderToTag(text, tags) {
+  return text.replace(/\{t(\d+)\}/g, (_, n) => tags[parseInt(n)-1]||'');
+}
+function renderTagHtml(text, tags) {
+  // Source column: styled {tN} with tooltip, non-editable
+  return text.replace(/\{t(\d+)\}/g, (_, n) => {
+    const idx = parseInt(n)-1;
+    const orig = tags && tags[idx] ? escHtml(tags[idx]) : '';
+    return `<span class="tag-ph" title="${orig}">{t${n}}</span>`;
+  });
+}
+function renderChipHtml(text, tags) {
+  // Translation column: non-editable chips for {tN}
+  return text.replace(/\{t(\d+)\}/g, (_, n) => {
+    const idx = parseInt(n)-1;
+    const orig = tags && tags[idx] ? escHtml(tags[idx]) : '';
+    return `<span class="tag-chip" contenteditable="false" title="${orig}">{t${n}}</span>`;
+  });
+}
+let activeTagPopup = null;
+
+function showTagPopup(ta, subIdx) {
+  closeTagPopup();
+  const subs = currentSubtitles();
+  const s = subs[subIdx];
+  if (!s) return;
+  const tags = /\{[^}]*\}/.test(s.text) ? extractTags(s.text) : [];
+  if (!tags.length) { toast('该行没有特效标签', 'error'); return; }
+
+  const sel = window.getSelection();
+  let left = 0, top = 0;
+  if (sel.rangeCount > 0) {
+    const r = sel.getRangeAt(0).getBoundingClientRect();
+    left = r.left; top = r.bottom + 4;
+  } else {
+    const br = ta.getBoundingClientRect();
+    left = br.left; top = br.bottom;
+  }
+
+  const wrap = document.createElement('div');
+  wrap.className = 'tag-popup';
+  wrap.style.left = left + 'px';
+  wrap.style.top = top + 'px';
+  const items = [];
+  for (let i = 0; i < tags.length; i++) {
+    const item = document.createElement('div');
+    item.className = 'tag-popup-item';
+    item.innerHTML = `<span style="font-family:var(--mono);color:#b388ff">t${i+1}</span><span class="orig-tag">${escHtml(tags[i])}</span>`;
+    item.dataset.n = i + 1;
+    item.onclick = (e) => { e.stopPropagation(); insertTagAtCursor(ta, parseInt(item.dataset.n)); };
+    wrap.appendChild(item);
+    items.push(item);
+  }
+  document.body.appendChild(wrap);
+  if (items.length) items[0].classList.add('selected');
+  activeTagPopup = { ta, subIdx, tags, el: wrap, items, selIdx: 0 };
+}
+
+function insertTagAtCursor(ta, tagNum) {
+  ta.focus(); // ensure contentEditable has focus so selection works
+  const sel = window.getSelection();
+  if (sel.rangeCount > 0) {
+    sel.deleteFromDocument(); // remove any selected text
+    const range = sel.getRangeAt(0);
+    const span = document.createElement('span');
+    span.className = 'tag-chip';
+    span.contentEditable = 'false';
+    const tags = activeTagPopup ? activeTagPopup.tags : [];
+    const orig = tags[tagNum-1] || '';
+    span.title = orig;
+    span.textContent = `{t${tagNum}}`;
+    range.insertNode(span);
+    range.setStartAfter(span);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+  closeTagPopup();
+  ta.focus();
+}
+
+function closeTagPopup() {
+  if (activeTagPopup) {
+    if (activeTagPopup.el && activeTagPopup.el.parentNode) activeTagPopup.el.parentNode.removeChild(activeTagPopup.el);
+    activeTagPopup = null;
+  }
+}
+function tagPopupMove(delta) {
+  if (!activeTagPopup) return;
+  const { items, selIdx } = activeTagPopup;
+  if (!items || !items.length) return;
+  items[selIdx]?.classList.remove('selected');
+  const nxt = Math.max(0, Math.min(items.length - 1, selIdx + delta));
+  items[nxt]?.classList.add('selected');
+  activeTagPopup.selIdx = nxt;
+}
+function tagPopupConfirm() {
+  if (!activeTagPopup) return;
+  const { ta, items, selIdx } = activeTagPopup;
+  const n = items[selIdx]?.dataset.n;
+  if (n) insertTagAtCursor(ta, parseInt(n));
+}
+
+// ═══════════════════════════════════════════
+//  Character Count
+// ═══════════════════════════════════════════
+function isCJK(lang) {
+  return /^(Chinese|Simplified Chinese|Traditional Chinese|Japanese|Korean|Thai|Vietnamese|Arabic)/i.test(lang||'');
+}
+function getCharCount(text, lang) {
+  if (!text) return 0;
+  const clean = text.replace(/\{[^}]*\}/g,'').replace(/\{t\d+\}/g,'');
+  const lines = clean.split('\n');
+  const maxLen = Math.max(...lines.map(line => {
+    const t = line.trim();
+    if (!t) return 0;
+    return isCJK(lang) ? [...t].length : t.split(/\s+/).filter(Boolean).length;
+  }));
+  return maxLen;
+}
+function getCharLimit() { return parseInt(localStorage.getItem('ds_charLimit')) || 16; }
+function isOverLimit(count, lang) {
+  const limit = getCharLimit();
+  return isCJK(lang) ? count > limit : count > Math.max(4, Math.floor(limit/2));
+}
+
+// ═══════════════════════════════════════════
+//  File Loading
+// ═══════════════════════════════════════════
+function loadVideo() {
+  const input = document.createElement('input');
+  input.type='file'; input.accept='video/mp4,video/mov,video/webm,video/quicktime';
+  input.onchange=e=>{ const f=e.target.files[0]; if(f) handleVideoFile(f); };
+  input.click();
+}
+function loadSRT() {
+  const input = document.createElement('input');
+  input.type='file'; input.accept='.srt,.ass,text/plain';
+  input.onchange=e=>{ const f=e.target.files[0]; if(f) handleSubtitleFile(f); };
+  input.click();
+}
+
+function handleVideoFile(file) {
+  state.videoFile = file;
+  // Revoke previous URL to avoid leaks
+  if (_currentVideoUrl) { URL.revokeObjectURL(_currentVideoUrl); _currentVideoUrl = ''; }
+  if (!file) { video.src = ''; video.load(); return; }
+  _currentVideoUrl = URL.createObjectURL(file);
+  const url = _currentVideoUrl;
+  video.src = url; video.load();
+  document.getElementById('videoPanel').classList.add('has-video');
+  document.getElementById('videoLabel').textContent = '📹 '+file.name;
+  document.getElementById('dropZone').classList.add('hidden');
+  document.getElementById('playBtn').textContent = '▶';
+  toast('已加载视频: '+file.name, 'success');
+}
+
+// ═══════════════════════════════════════════
+//  ASS Parser
+// ═══════════════════════════════════════════
+function parseASS(text) {
+  const sec = text.match(/\[Events\]([\s\S]*?)(?=\[|\s*$)/);
+  if (!sec) return null;
+  const fmt = sec[1].match(/Format:\s*(.*)/i);
+  if (!fmt) return null;
+  const fields = fmt[1].split(',').map(f=>f.trim());
+  const si = fields.indexOf('Start'), ei = fields.indexOf('End'), ti = fields.indexOf('Text'), sti = fields.indexOf('Style');
+  const mvi = fields.indexOf('MarginV');
+  if (si<0||ei<0||ti<0) return null;
+  const result = [];
+  const dlg = sec[1].match(/^Dialogue:\s*(.*)$/gm);
+  if (!dlg) return result;
+  for (let i=0;i<dlg.length;i++) {
+    const parts = dlg[i].replace(/^Dialogue:\s*/,'').split(',');
+    if (parts.length<Math.max(si,ei,ti)+1) continue;
+    const m = p=>{const r=p.match(/(\d+):(\d{2}):(\d{2})[.:](\d{2})/);return r?+r[1]*3600000+(+r[2])*60000+(+r[3])*1000+(+r[4])*10:0};
+    const marginV = (mvi>=0 && mvi<parts.length) ? parseInt(parts[mvi].trim()) || 0 : 0;
+    result.push({
+      index:i+1, startMs:m(parts[si].trim()), endMs:m(parts[ei].trim()),
+      text: parts.slice(ti).join(',').replace(/\\N/g,'\n').replace(/\\n/g,'\n'),
+      translation:'', status:'empty',
+      styleName: sti>=0&&sti<parts.length ? parts[sti].trim() : 'Default',
+      marginV: marginV,
+    });
+  }
+  return result;
+}
+
+// ═══════════════════════════════════════════
+//  ASS Style Parsing (for overlay rendering)
+// ═══════════════════════════════════════════
+function parseASSStyles(rawSource) {
+  const styles = {};
+  if (!rawSource) return styles;
+  // Try multiple patterns for the Styles section header
+  let sec = rawSource.match(/\[V4\+*\s*Styles?\]([\s\S]*?)(?=\[|\s*$)/i);
+  if (!sec) sec = rawSource.match(/\[V4\+*\s*Styles?\]([\s\S]*?)(?=\[|$)/i);
+  if (!sec) sec = rawSource.match(/\[.*Styles\]([\s\S]*?)(?=\[|$)/i);
+  if (!sec) {
+    console.log('NO STYLES SECTION in rawSource. First 300 chars:', rawSource.substring(0,300));
+    return styles;
+  }
+  const fmt = sec[1].match(/Format:\s*(.*)/im);
+  if (!fmt) { console.log('NO FORMAT line in styles section:', sec[1].substring(0,150)); return styles; }
+  const fields = fmt[1].split(',').map(f=>f.trim());
+  const lines = sec[1].match(/^Style:\s*(.*)$/gm);
+  if (!lines) { console.log('NO STYLE lines in styles section:', sec[1].substring(0,200)); return styles; }
+  for (const line of lines) {
+    const parts = line.replace(/^Style:\s*/, '').split(',');
+    if (parts.length < fields.length) continue;
+    const name = parts[0].trim();
+    const s = {};
+    for (let i = 1; i < fields.length; i++) s[fields[i].trim()] = (parts[i]||'').trim();
+    styles[name] = s;
+  }
+  return styles;
+}
+
+function assColorToCSS(assColor) {
+  if (!assColor) return '';
+  const m = assColor.match(/&H([0-9a-fA-F]+)/);
+  if (!m || m[1].length < 6) return '';
+  let hex = m[1];
+  if (hex.length >= 8) hex = hex.substring(2); // skip alpha byte
+  // BBGGRR → #RRGGBB
+  return '#' + hex[4] + hex[5] + hex[2] + hex[3] + hex[0] + hex[1];
+}
+
+let _assStyleCache = '';
+let _assStyleMap = {};
+
+function getAssStyles() {
+  const ep = activeEpisode();
+  const src = ep ? ep.rawSource : null;
+  if (src && src !== _assStyleCache) {
+    _assStyleCache = src;
+    _assStyleMap = parseASSStyles(src);
+    console.log('ASS STYLES parsed from rawSource:', Object.keys(_assStyleMap));
+  } else if (!src && _assStyleCache !== 'built') {
+    _assStyleCache = 'built';
+    const subs = currentSubtitles();
+    _assStyleMap = {};
+    const seen = new Set();
+    for (const s of subs) {
+      if (s.styleName && !seen.has(s.styleName)) {
+        seen.add(s.styleName);
+        _assStyleMap[s.styleName] = { Fontname: '', Fontsize: '20', PrimaryColour: '&H00FFFFFF', OutlineColour: '&H00000000', BackColour: '&H00000000', Bold: '0', Italic: '0', Outline: '2', Shadow: '2', Alignment: '2' };
+      }
+    }
+    console.log('AUTO STYLES built:', Object.keys(_assStyleMap));
+  }
+  return _assStyleMap || {};
+}
+
+function handleSubtitleFile(file) {
+  state.srtFile = file;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target.result;
+    const isASS = /\.ass$/i.test(file.name);
+    let subs = isASS ? parseASS(text) : parseSRT(text);
+    if (!subs||!subs.length) {
+      // If ASS parser failed, try SRT as fallback
+      if (isASS) { subs = parseSRT(text); }
+      if (!subs||!subs.length) { toast('无法解析字幕文件', 'error'); return; }
+    }
+    const proj = activeProject();
+    if (!proj) return;
+    const fmt = /\.(srt|ass)$/i.test(file.name) ? '.'+file.name.match(/\.(srt|ass)$/i)[1].toUpperCase() : '';
+    const epName = file.name.replace(/\.(srt|ass)$/i,'');
+    const ep = {
+      id: 'ep_'+Date.now(), name: epName, status: 'new',
+      subtitles: subs, sourceFile: file.name,
+      format: isASS ? 'ass' : 'srt',
+      rawSource: isASS ? text : null,
+    };
+    proj.episodes.push(ep);
+    state.activeEpisodeIdx = proj.episodes.length - 1;
+    state.currentSubIdx = -1;
+    markDirty();
+    renderAll();
+    updateVideoEnabled();
+    toast(`已加载 ${fmt||'SRT'} ${subs.length} 条字幕 → ${epName}`, 'success');
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function readFileAsText(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsText(file, 'UTF-8');
+  });
+}
+
+async function readDirFiles(dirHandle) {
+  const result = [];
+  for await (const [name, handle] of dirHandle.entries()) {
+    if (handle.kind === 'file') {
+      const file = await handle.getFile();
+      result.push({ name, file, handle, relPath: name });
+    } else if (handle.kind === 'directory') {
+      for await (const [subName, subHandle] of handle.entries()) {
+        if (subHandle.kind === 'file') {
+          const file = await subHandle.getFile();
+          result.push({ name: subName, file, handle: subHandle, relPath: name + '/' + subName });
+        }
+      }
+    }
+  }
+  return result;
+}
+
+function saveProjectToFolder() {
+  if (!_projectDirHandle) return;
+  const proj = activeProject();
+  if (!proj) return;
+  const data = {
+    version: 1,
+    name: proj.name,
+    sourceLang: proj.sourceLang,
+    targetLang: proj.targetLang,
+    phase: state.phase,
+    activeEpisodeIdx: state.activeEpisodeIdx,
+    episodes: proj.episodes.map(ep => ({
+      id: ep.id, name: ep.name, status: ep.status,
+      sourceFile: ep.sourceFile,
+      videoFile: typeof ep.videoFile === 'string' ? ep.videoFile :
+                  (ep.videoFile?.name || ''),
+      format: ep.format,
+      rawSource: ep.rawSource,
+      subtitles: ep.subtitles,
+    })),
+    glossary: proj.glossary,
+    updatedAt: Date.now(),
+  };
+  _projectDirHandle.getFileHandle('project.json', { create: true })
+    .then(fh => fh.createWritable())
+    .then(w => w.write(JSON.stringify(data, null, 2)).then(() => w.close()))
+    .catch(e => console.warn('saveProjectToFolder error:', e));
+}
+
+function loadVideoFromFolder(relPath) {
+  if (!_projectDirHandle || !relPath) return false;
+  _projectDirHandle.getFileHandle(relPath).then(fh => fh.getFile()).then(file => {
+    handleVideoFile(file);
+  }).catch(() => {
+    // Try flat filename as fallback
+    const name = relPath.includes('/') ? relPath.split('/').pop() : relPath;
+    _projectDirHandle.getFileHandle(name).then(fh => fh.getFile()).then(file => {
+      handleVideoFile(file);
+    }).catch(() => {});
+  });
+  return true;
+}
+
+async function importFolder() {
+  let dirHandle;
+  try { dirHandle = await window.showDirectoryPicker(); }
+  catch(e) { return; } // user cancelled
+  _projectDirHandle = dirHandle;
+  const allFiles = await readDirFiles(dirHandle);
+  if (!allFiles.length) { toast('文件夹为空', 'error'); return; }
+  // Categorize
+  const subFiles = allFiles.filter(f => /\.(srt|ass)$/i.test(f.name));
+  const videoFiles = allFiles.filter(f => /\.(mp4|mov|webm|mkv)$/i.test(f.name));
+  if (!subFiles.length) { toast('文件夹中没有字幕文件', 'error'); return; }
+  // Build video map by base name → relPath
+  const videoMap = {};
+  for (const vf of videoFiles) {
+    const base = vf.name.replace(/\.[^.]+$/, '').toLowerCase();
+    videoMap[base] = vf.relPath;
+  }
+  const proj = activeProject();
+  proj.name = dirHandle.name;
+  let count = 0, videoMatch = 0;
+  for (const sf of subFiles) {
+    let content;
+    try { content = await readFileAsText(sf.file); } catch(e) { continue; }
+    const isASS = /\.ass$/i.test(sf.name);
+    let parsed = isASS ? parseASS(content) : parseSRT(content);
+    if (!parsed || !parsed.length) {
+      if (isASS) { parsed = parseSRT(content); }
+      if (!parsed || !parsed.length) continue;
+    }
+    const base = sf.name.replace(/\.[^.]+$/, '');
+    const videoRelPath = videoMap[base.toLowerCase()] || '';
+    const ep = {
+      id: 'ep_' + Date.now() + '_' + count,
+      name: base,
+      status: 'new',
+      subtitles: parsed,
+      sourceFile: sf.relPath,
+      format: isASS ? 'ass' : 'srt',
+      rawSource: isASS ? content : null,
+      videoFile: videoRelPath,
+    };
+    proj.episodes.push(ep);
+    count++;
+    if (videoRelPath) videoMatch++;
+  }
+  if (!count) { toast('未能解析任何字幕文件', 'error'); return; }
+  state.activeEpisodeIdx = proj.episodes.length - count;
+  state.currentSubIdx = -1;
+  markDirty();
+  renderAll();
+  // Load first episode's video from folder
+  const firstEp = proj.episodes[state.activeEpisodeIdx];
+  if (firstEp && firstEp.videoFile) {
+    loadVideoFromFolder(firstEp.videoFile);
+  }
+  // Save project.json to folder
+  saveProjectToFolder();
+  toast(`📁 已导入 ${count} 个字幕文件${videoMatch ? '，'+videoMatch+' 个匹配了视频' : ''}`, 'success');
+}
+
+async function openProjectFromFolder() {
+  let dirHandle;
+  try { dirHandle = await window.showDirectoryPicker(); }
+  catch(e) { return; }
+  let fileHandle;
+  try { fileHandle = await dirHandle.getFileHandle('project.json'); }
+  catch(e) { toast('该文件夹不是有效的项目（无 project.json）', 'error'); return; }
+  const file = await fileHandle.getFile();
+  const content = await file.text();
+  let data;
+  try { data = JSON.parse(content); } catch(e) { toast('project.json 格式错误', 'error'); return; }
+  // Restore project
+  const proj = activeProject();
+  proj.name = data.name || dirHandle.name;
+  proj.sourceLang = data.sourceLang || 'auto';
+  proj.targetLang = data.targetLang || 'Simplified Chinese';
+  proj.episodes = data.episodes || [];
+  proj.glossary = data.glossary || [];
+  if (data.phase) state.phase = data.phase;
+  state.activeEpisodeIdx = data.activeEpisodeIdx ?? 0;
+  state.currentSubIdx = -1;
+  _projectDirHandle = dirHandle;
+  markDirty();
+  renderAll();
+  // Load first episode's video
+  const firstEp = proj.episodes[state.activeEpisodeIdx];
+  if (firstEp && firstEp.videoFile) {
+    loadVideoFromFolder(firstEp.videoFile);
+  }
+  toast(`📂 已打开项目: ${proj.name}（${proj.episodes.length} 集）`, 'success');
+}
+
+async function createProjectInFolder() {
+  let dirHandle;
+  try { dirHandle = await window.showDirectoryPicker(); }
+  catch(e) { return; }
+  _projectDirHandle = dirHandle;
+  const proj = activeProject();
+  proj.name = dirHandle.name;
+  markDirty();
+  saveProjectToFolder();
+  toast(`💾 项目已保存到文件夹: ${dirHandle.name}`, 'success');
+}
+
+// ═══════════════════════════════════════════
+//  Render All
+// ═══════════════════════════════════════════
+function renderAll() {
+  renderSidebarPanel();
+  renderPhaseSteps();
+  renderSubtitles();
+  updateStatusBar();
+  updateVideoEnabled();
+}
+
+function updateStatusBar() {
+  const proj = activeProject();
+  if (_projectDirHandle) {
+    document.getElementById('sbProject').textContent = '📁 ' + (_projectDirHandle.name || proj?.name || '本地项目');
+  } else if (proj) {
+    document.getElementById('sbProject').textContent = '📁 '+proj.name;
+  } else {
+    document.getElementById('sbProject').textContent = '📁 未选择项目';
+  }
+  const ep = activeEpisode();
+  if (ep) {
+    document.getElementById('sbEpisode').textContent = '📋 '+ep.name;
+    const done = ep.subtitles.filter(s => s.translation&&s.translation.trim()).length;
+    document.getElementById('sbCount').textContent = `📊 ${done}/${ep.subtitles.length}`;
+  } else {
+    document.getElementById('sbEpisode').textContent = '📋 —';
+    document.getElementById('sbCount').textContent = '📊 0/0';
+  }
+  const curPhase = PHASES.find(p=>p.id===state.phase);
+  document.getElementById('sbPhase').textContent = '📌 '+(curPhase?curPhase.label:state.phase);
+}
+
+// ═══════════════════════════════════════════
+//  Render CAT Table
+// ═══════════════════════════════════════════
+function renderSubtitles() {
+  const allSubs = currentSubtitles();
+  const filtered = getFilteredSubtitles();
+  const tbody = document.getElementById('catBody');
+  tbody.innerHTML = '';
+
+  // Panel header
+  const ep = activeEpisode();
+  document.getElementById('panelEpName').textContent = ep ? ep.name : 'CAT 表格';
+  document.getElementById('subCount').textContent = filtered.length + ' 条' + (state.searchQuery ? ` (共 ${allSubs.length})` : '');
+
+  // Empty state
+  const empty = document.getElementById('emptyState');
+  empty.classList.toggle('hidden', allSubs.length > 0);
+
+  // Export/translate buttons
+  document.getElementById('btnTranslate').disabled = allSubs.length === 0;
+  document.getElementById('btnExport').disabled = allSubs.length === 0;
+
+  const isEditable = state.phase === 'editing';
+  const proj = activeProject();
+  const targetLang = proj ? proj.targetLang : 'Simplified Chinese';
+  const tabAdvance = localStorage.getItem('ds_tabAdvance') !== '0';
+  // Apply font size
+  const fs = parseInt(localStorage.getItem('ds_fontSize')) || 12;
+  document.getElementById('catTable').className = 'cat-table size-'+fs;
+
+  // Auto-size style column using actual cell font (not th's bold)
+  const styleTh = document.querySelector('.col-style');
+  if (styleTh) {
+    const cell = document.createElement('span');
+    cell.style.cssText = 'position:fixed;visibility:hidden;white-space:nowrap;font:10px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+    document.body.appendChild(cell);
+    let mw = 0;
+    for (const s of allSubs) { if (s.styleName) { cell.textContent = s.styleName; mw = Math.max(mw, cell.offsetWidth); } }
+    document.body.removeChild(cell);
+    styleTh.style.width = (mw ? mw + 18 : 0) + 'px';
+  }
+
+  // Build index map from filtered to original
+  let fIdx = 0;
+  for (let i = 0; i < allSubs.length; i++) {
+    const s = allSubs[i];
+    const match = !state.searchQuery || s.text.toLowerCase().includes(state.searchQuery.toLowerCase()) || (s.translation||'').toLowerCase().includes(state.searchQuery.toLowerCase());
+    const show = !state.searchQuery || match;
+
+    if (state.searchQuery && !match) { /* hidden by filter */ }
+    const tr = document.createElement('tr');
+    tr.dataset.idx = i;
+    if (show) {
+      if (i === state.currentSubIdx) tr.classList.add('active');
+
+      const hasTrans = s.translation && s.translation.trim();
+      const charCount = getCharCount(s.translation||s.text, targetLang);
+      const overLimit = isOverLimit(charCount, targetLang);
+      const dotClass = !hasTrans ? 'empty' : overLimit ? 'warning' : 'confirmed';
+
+      const hasFx = /\{[^}]*\}/.test(s.text);
+      const tags = hasFx ? extractTags(s.text) : [];
+      // Source display: {tN} with styled spans + tooltip
+      const srcDisplay = hasFx ? tagToPlaceholder(s.text) : s.text;
+      const srcHtml = hasFx ? renderTagHtml(escHtml(srcDisplay), tags) : escHtml(s.text);
+      // Target display: {tN} as non-editable chips
+      const tgtPre = hasFx && !s.translation ? tagToPlaceholder(s.text) : '';
+      const tgtRaw = s.translation ? s.translation : tgtPre;
+      const tgtHtml = tgtRaw ? (hasFx ? renderChipHtml(escHtml(tgtRaw), tags) : escHtml(tgtRaw)) : '';
+      tr.innerHTML = `
+        <td><span class="cell-num">${s.index}</span></td>
+        <td><span class="cell-time">${msToTimecode(s.startMs)} → ${msToTimecode(s.endMs)}</span></td>
+        <td><span class="cell-style">${escHtml(s.styleName||'')}</span></td>
+        <td><span class="cell-chars ${overLimit?'over':''}">${charCount}</span></td>
+        <td><div class="cell-src">${srcHtml}</div></td>
+        <td class="cell-tgt" data-idx="${i}" contenteditable="${isEditable}">${tgtHtml}</td>
+        <td><span class="cell-stat"><span class="stat-dot ${dotClass}" id="dot-${i}"></span></span></td>
+      `;
+      tr.onclick = () => subtitleClick(i);
+
+      // Wire target cell events
+      const ta = tr.querySelector('.cell-tgt');
+      if (!isEditable) {
+        ta.style.cursor = 'default';
+      } else {
+        // Click: sync row highlight, select-all for plain cells
+        ta.addEventListener('click', (e) => {
+          e.stopPropagation();
+          subtitleClick(i); // sync highlight to this row
+          if (!ta.querySelector('.tag-chip')) {
+            const r = document.createRange(); r.selectNodeContents(ta);
+            const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+          }
+        });
+        ta.addEventListener('blur', () => {
+          s.translation=ta.textContent||'';
+          // Re-wrap {tN} as chips for display
+          if (hasFx) { ta.innerHTML = renderChipHtml(escHtml(ta.textContent), tags); }
+          updateStatusDot(i); markDirty();
+        });
+        ta.addEventListener('input', () => { s.translation=ta.textContent||''; updateStatusDot(i); });
+        ta.addEventListener('keydown', (e) => {
+          // Tag popup navigation takes priority
+          if (activeTagPopup) {
+            if (e.key==='ArrowDown') { e.preventDefault(); tagPopupMove(1); return; }
+            if (e.key==='ArrowUp') { e.preventDefault(); tagPopupMove(-1); return; }
+            if (e.key==='Enter') { e.preventDefault(); tagPopupConfirm(); return; }
+            if (e.key==='Escape') { closeTagPopup(); e.preventDefault(); e.stopPropagation(); return; }
+            closeTagPopup(); return; // dismiss + let key through to editor
+          }
+          if (e.key==='Tab'&&!e.shiftKey&&tabAdvance) { e.preventDefault(); commitAndFocus(i, i+1); }
+          if (e.key==='Tab'&&e.shiftKey&&tabAdvance) { e.preventDefault(); commitAndFocus(i, i-1); }
+          if ((e.key==='Enter'&&!e.shiftKey)&&(e.metaKey||e.ctrlKey)) { e.preventDefault(); s.translation=ta.textContent||''; updateStatusDot(i); subtitleClick(i); }
+          if (e.key==='/' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+            e.preventDefault(); showTagPopup(ta, i);
+          }
+        });
+      }
+    }
+    tbody.appendChild(tr);
+    if (show) fIdx++;
+  }
+}
+
+function commitAndFocus(currentIdx, nextIdx) {
+  const s = currentSubtitles()[currentIdx];
+  if (s) { s.translation = document.querySelector(`.cell-tgt[data-idx="${currentIdx}"]`)?.textContent||''; updateStatusDot(currentIdx); }
+  const nextTr = document.querySelector(`#catBody tr[data-idx="${nextIdx}"]`);
+  const nextTa = nextTr?.querySelector('.cell-tgt');
+  if (nextTa && state.phase==='editing') {
+    nextTa.focus();
+    if (!nextTa.querySelector('.tag-chip')) {
+      const r = document.createRange(); r.selectNodeContents(nextTa);
+      const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    }
+  }
+}
+
+function updateStatusDot(idx) {
+  const dot = document.getElementById(`dot-${idx}`);
+  if (!dot) return;
+  const s = currentSubtitles()[idx];
+  if (!s) return;
+  const hasTrans = s.translation && s.translation.trim();
+  const targetLang = (activeProject()||{}).targetLang || 'Simplified Chinese';
+  const count = hasTrans ? getCharCount(s.translation, targetLang) : 0;
+  const over = hasTrans && isOverLimit(count, targetLang);
+  dot.className = 'stat-dot ' + (!hasTrans ? 'empty' : over ? 'warning' : 'confirmed');
+}
+function activateEdit(el) {
+  if (!el) return;
+  el.focus();
+  if (!el.querySelector('.tag-chip')) {
+    const r = document.createRange(); r.selectNodeContents(el);
+    const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  }
+}
+
+function escHtml(text) {
+  const d = document.createElement('div');
+  d.textContent = text;
+  return d.innerHTML;
+}
+
+// ═══════════════════════════════════════════
+//  Jump to Next Empty
+// ═══════════════════════════════════════════
+function jumpToNextEmpty() {
+  const subs = currentSubtitles();
+  if (!subs.length) return;
+  const start = Math.max(0, state.currentSubIdx + 1);
+  for (let i = start; i < subs.length; i++) {
+    if (!subs[i].translation || !subs[i].translation.trim()) {
+      subtitleClick(i);
+      // Also auto-edit
+      const ta = document.querySelector(`.cell-tgt[data-idx="${i}"]`);
+      if (ta && (state.phase==='editing'||false)) {
+        setTimeout(() => activateEdit(ta), 300);
+      }
+      return;
+    }
+  }
+  // Wrap around
+  for (let i = 0; i < start; i++) {
+    if (!subs[i].translation || !subs[i].translation.trim()) {
+      subtitleClick(i);
+      const ta = document.querySelector(`.cell-tgt[data-idx="${i}"]`);
+      if (ta && (state.phase==='editing'||false)) setTimeout(() => activateEdit(ta), 300);
+      return;
+    }
+  }
+  toast('所有行都已翻译！', 'success');
+}
+
+// ═══════════════════════════════════════════
+//  Video
+// ═══════════════════════════════════════════
+const video = document.getElementById('video');
+const seekBar = document.getElementById('seekBar');
+const timeDisplay = document.getElementById('timeDisplay');
+const playBtn = document.getElementById('playBtn');
+
+function updateVideoEnabled() {
+  const ep = activeEpisode();
+  if (ep && ep.subtitles.length) {
+    // Enable seek interaction even without video file
+  }
+}
+
+let _segmentEnd = 0;
+let _currentVideoUrl = '';
+let _projectDirHandle = null;
+
+function getVideoScale() {
+  if (video && video.src && video.videoWidth && video.videoHeight) {
+    const vw = video.videoWidth, vh = video.videoHeight;
+    const cw = video.clientWidth, ch = video.clientHeight;
+    if (cw && ch) {
+      const s = Math.min(cw / vw, ch / vh);
+      return { scale: s, scaleX: s, scaleY: s };
+    }
+  }
+  // No video loaded — try to infer from ASS PlayRes or overlay width
+  const overlay = document.getElementById('subOverlay');
+  const ow = overlay ? overlay.clientWidth : 600;
+  const ep = activeEpisode();
+  if (ep && ep.rawSource) {
+    const pr = ep.rawSource.match(/PlayRes[XY]\s*:\s*(\d+)/i);
+    const prX = pr ? parseInt(pr[1]) : 0;
+    if (prX > 0) {
+      const s = ow / prX;
+      return { scale: s, scaleX: s, scaleY: s };
+    }
+  }
+  // Reasonable default: assume 1080p design, scale from overlay width
+  const s = Math.min(1, ow / 1920);
+  return { scale: s, scaleX: s, scaleY: s };
+}
+
+function resolveOverlayText(text, sourceText, styleName, styleMap, videoScale, marginV) {
+  if (!text) return { text: '', style: '' };
+  const vs = (videoScale && videoScale.scale > 0) ? videoScale.scale : 1;
+  let t = text;
+  const origTags = extractTags(sourceText || text);
+  t = placeholderToTag(t, origTags);
+
+  // Defaults — no ASS styling for plain text
+  let bold = false, italic = false, underline = false;
+  let fontName = '', fontSize = '';
+  let color = '#ffffff';
+  let outlineColor = '';
+  let shadowColor = '';
+  let bord = 0, shad = 0, an = 2;
+  let hasAssStyle = false;
+  let posX = null, posY = null;
+
+  // Apply style-level defaults from [V4+ Styles]
+  console.log('OVERLAY SCALE:', vs.toFixed(3));
+  let st = null;
+  if (styleName && styleMap) {
+    st = styleMap[styleName];
+    // Fallback: trim whitespace / try first available style
+    if (!st) {
+      const trimmed = styleName.replace(/^\s+|\s+$/g, '');
+      if (trimmed !== styleName) st = styleMap[trimmed];
+      if (!st) { // try any style as fallback
+        const keys = Object.keys(styleMap);
+        if (keys.length) st = styleMap[keys[0]];
+      }
+      console.log('STYLE FALLBACK:', {styleName, trimmed, found: !!st, allKeys: Object.keys(styleMap)});
+    }
+  }
+  if (st) {
+    hasAssStyle = true;
+    if (st.Fontname) fontName = st.Fontname;
+    if (st.Fontsize) fontSize = Math.round(parseInt(st.Fontsize) * 1.333 * vs) + 'px';
+    if (st.PrimaryColour) color = assColorToCSS(st.PrimaryColour) || color;
+    if (st.OutlineColour) outlineColor = assColorToCSS(st.OutlineColour) || outlineColor;
+    if (st.BackColour) shadowColor = assColorToCSS(st.BackColour) || shadowColor;
+    if (st.Bold === '-1') bold = true;
+    if (st.Italic === '-1') italic = true;
+    if (st.Outline != null) bord = Math.round(parseInt(st.Outline) * vs) || 0;
+    if (st.Shadow != null) shad = Math.round(parseInt(st.Shadow) * vs) || 0;
+    if (st.Alignment) an = parseInt(st.Alignment) || 2;
+  }
+
+  // Parse inline formatting tags
+  t.replace(/\{([^}]*)\}/g, (_, inner) => {
+    if (/^\\b(\d)/.test(inner)) bold = /^\\b(\d)/.exec(inner)[1] === '1';
+    if (/^\\i(\d)/.test(inner)) italic = /^\\i(\d)/.exec(inner)[1] === '1';
+    if (/^\\u(\d)/.test(inner)) underline = /^\\u(\d)/.exec(inner)[1] === '1';
+    if (/^\\fn(.+)/.test(inner)) fontName = /^\\fn(.+)/.exec(inner)[1];
+    if (/^\\fs(\d+)/.test(inner)) fontSize = Math.round(parseInt(/^\\fs(\d+)/.exec(inner)[1]) * 1.333 * vs) + 'px';
+    // Colors: \\c / \\1c = primary, \\3c = outline, \\4c = shadow
+    const c1 = inner.match(/^\\(?:1)?c&H([0-9a-fA-F]+)&/);
+    if (c1 && c1[1].length >= 6) color = '#' + c1[1][4] + c1[1][5] + c1[1][2] + c1[1][3] + c1[1][0] + c1[1][1];
+    const c3 = inner.match(/^\\3c&H([0-9a-fA-F]+)&/);
+    if (c3 && c3[1].length >= 6) outlineColor = '#' + c3[1][4] + c3[1][5] + c3[1][2] + c3[1][3] + c3[1][0] + c3[1][1];
+    const c4 = inner.match(/^\\4c&H([0-9a-fA-F]+)&/);
+    if (c4 && c4[1].length >= 6) shadowColor = '#' + c4[1][4] + c4[1][5] + c4[1][2] + c4[1][3] + c4[1][0] + c4[1][1];
+    // Border / shadow width
+    const bm = inner.match(/^\\bord([\d.]+)/);
+    if (bm) bord = Math.round(parseFloat(bm[1]) * vs);
+    const sm = inner.match(/^\\shad([\d.]+)/);
+    if (sm) shad = Math.round(parseFloat(sm[1]) * vs);
+    // \\pos(x,y) positioning — scale coords to display size
+    const pm = inner.match(/^\\pos\(([\d.]+),([\d.]+)\)/);
+    if (pm) { posX = parseFloat(pm[1]) * vs; posY = parseFloat(pm[2]) * vs; }
+    // Alignment
+    const am = inner.match(/^\\an(\d)/);
+    if (am) an = parseInt(am[1]);
+    return '';
+  });
+
+  const clean = t.replace(/\{[^}]*\}/g, '').replace(/\\[Nn]/g, '\n');
+  const parts = [];
+
+  // Font properties
+  if (bold) parts.push('font-weight:700');
+  if (italic) parts.push('font-style:italic');
+  if (underline) parts.push('text-decoration:underline');
+  if (fontName) parts.push("font-family:'" + fontName.replace(/\\/g, '') + "',sans-serif");
+  if (fontSize) parts.push('font-size:' + fontSize);
+  if (color) parts.push('color:' + color);
+
+  // Text-shadow: ASS-style border + shadow, or simple readability fallback
+  const shadows = [];
+  if (hasAssStyle && bord > 0 && outlineColor) {
+    for (let x = -bord; x <= bord; x++) {
+      for (let y = -bord; y <= bord; y++) {
+        if (x*x + y*y <= (bord + 0.5) * (bord + 0.5)) {
+          shadows.push(x + 'px ' + y + 'px 0 ' + outlineColor);
+        }
+      }
+    }
+  }
+  if (hasAssStyle && shad > 0 && shadowColor) {
+    const off = Math.max(2, shad * 2);
+    shadows.push(off + 'px ' + off + 'px 0 ' + shadowColor);
+  }
+  if (!shadows.length) {
+    // Simple readable glow for non-ASS / fallback
+    shadows.push('0 0 6px rgba(0,0,0,0.9)', '0 2px 4px rgba(0,0,0,0.8)');
+  }
+  parts.push('text-shadow:' + shadows.join(','));
+
+  // Resolve vertical margin: per-line > style > default
+  let mv = (marginV && marginV > 0) ? marginV : 0;
+  if (mv <= 0 && st && st.MarginV) mv = parseInt(st.MarginV) || 0;
+  if (mv <= 0) mv = 60; // default bottom margin
+  mv = Math.round(mv * vs);
+
+  // Positioning: \pos overrides alignment-based positioning
+  if (posX !== null && posY !== null) {
+    parts.push('position:absolute;left:' + posX + 'px;top:' + posY + 'px');
+  } else if (an <= 3) {
+    parts.push('position:absolute;bottom:' + mv + 'px');
+  } else if (an >= 7) {
+    parts.push('position:absolute;top:' + mv + 'px');
+  } else {
+    // an 4-6: vertically centered
+    parts.push('position:absolute;top:50%;transform:translateY(-50%)');
+    if (mv) parts.push('margin-top:' + mv + 'px');
+  }
+
+  // Horizontal alignment: 1=BL,2=BC,3=BR,4=CL,5=CC,6=CR,7=TL,8=TC,9=TR
+  if (an % 3 === 1) parts.push('text-align:left');
+  else if (an % 3 === 2) parts.push('text-align:center');
+  else parts.push('text-align:right');
+
+  return { text: clean, style: parts.join(';') };
+}
+
+video.addEventListener('timeupdate', () => {
+  if (video.duration) {
+    seekBar.value = (video.currentTime/video.duration)*100;
+    timeDisplay.textContent = formatTimeShort(video.currentTime*1000)+' / '+formatTimeShort(video.duration*1000);
+  }
+  const currentMs = video.currentTime*1000;
+  const subs = currentSubtitles();
+  // Collect ALL subtitles active at current time (support overlapping)
+  let activeSubs = [];
+  for (let i = 0; i < subs.length; i++) {
+    if (currentMs >= subs[i].startMs && currentMs < subs[i].endMs) activeSubs.push(subs[i]);
+  }
+  // Update overlay — each active subtitle renders independently with its own style
+  const styleMap = getAssStyles();
+  const overlay = document.getElementById('subOverlay');
+  if (activeSubs.length) {
+    const htmlParts = [];
+    for (let si = 0; si < activeSubs.length; si++) {
+      const s = activeSubs[si];
+      const raw = (s.translation && s.translation.trim()) ? s.translation : s.text;
+      const r = resolveOverlayText(raw, s.text, s.styleName, styleMap, getVideoScale(), s.marginV);
+      htmlParts.push('<div style="' + r.style + '">' + escHtml(r.text) + '</div>');
+    }
+    overlay.innerHTML = htmlParts.join('');
+    overlay.style.display = 'block';
+  } else {
+    overlay.innerHTML = '';
+    overlay.style.display = 'none';
+  }
+  // Stop at segment end during single-subtitle play
+  if (_segmentEnd && video.currentTime * 1000 >= _segmentEnd) {
+    video.pause();
+    _segmentEnd = 0;
+  }
+});
+video.addEventListener('play', ()=>{ playBtn.textContent='⏸'; });
+video.addEventListener('pause', ()=>{ playBtn.textContent='▶'; });
+video.addEventListener('ended', ()=>{ playBtn.textContent='▶'; _segmentEnd=0; });
+
+function togglePlay() {
+  if (video.paused) { video.play().catch(()=>{}); } else { video.pause(); _segmentEnd=0; }
+}
+function playCurrentSubtitle() {
+  const subs = currentSubtitles();
+  if (state.currentSubIdx < 0 || !subs[state.currentSubIdx]) { toast('请先选中一个字幕行', 'error'); return; }
+  const s = subs[state.currentSubIdx];
+  if (!video.src || video.readyState < 1) { toast('请先加载视频', 'error'); return; }
+  _segmentEnd = s.endMs;
+  video.currentTime = s.startMs / 1000;
+  video.play().catch(()=>{});
+}
+function seekVideo(val) {
+  if (video.duration) video.currentTime = (val/100)*video.duration;
+}
+function subtitleClick(idx) {
+  const subs = currentSubtitles();
+  const s = subs[idx];
+  if (!s) return;
+  if (video.src && video.readyState >= 1) {
+    video.currentTime = s.startMs/1000;
+    video.pause();
+  }
+  // Always show selected subtitle in overlay, even without video
+  showSubtitleInOverlay(s);
+  highlightSubtitle(idx);
+  state.currentSubIdx = idx;
+  const tr = document.querySelector(`#catBody tr[data-idx="${idx}"]`);
+  if (tr) tr.scrollIntoView({block:'center',behavior:'smooth'});
+}
+function showSubtitleInOverlay(s) {
+  const overlay = document.getElementById('subOverlay');
+  if (!overlay) return;
+  const raw = (s.translation && s.translation.trim()) ? s.translation : s.text;
+  const styleMap = getAssStyles();
+  const r = resolveOverlayText(raw, s.text, s.styleName, styleMap, getVideoScale(), s.marginV);
+  overlay.innerHTML = '<div style="' + r.style + '">' + escHtml(r.text) + '</div>';
+  overlay.style.display = 'block';
+}
+function highlightSubtitle(idx) {
+  document.querySelectorAll('#catBody tr').forEach((el,i) => {
+    el.classList.toggle('active', i===idx);
+  });
+}
+
+// ═══════════════════════════════════════════
+//  Keyboard Shortcuts
+// ═══════════════════════════════════════════
+document.addEventListener('keydown', (e) => {
+  if (e.target.isContentEditable) {
+    if (e.key==='Escape') { e.target.blur(); return; }
+    return;
+  }
+  if (e.key===' ') { e.preventDefault(); togglePlay(); }
+  if (e.key==='ArrowDown' && (e.metaKey||e.ctrlKey)) { e.preventDefault(); jumpToNextEmpty(); }
+});
+// Close tag popup on click outside (popup handled in cell keydown for arrow/enter)
+document.addEventListener('mousedown', (e) => {
+  if (activeTagPopup && !e.target.closest('.tag-popup')) closeTagPopup();
+});
+
+// ═══════════════════════════════════════════
+//  Drag & Drop
+// ═══════════════════════════════════════════
+document.addEventListener('dragover', e=>e.preventDefault());
+document.addEventListener('drop', e=>e.preventDefault());
+
+document.getElementById('videoPanel').addEventListener('dragover', e=>e.preventDefault());
+document.getElementById('videoPanel').addEventListener('drop', e => {
+  e.preventDefault();
+  for (const file of e.dataTransfer.files) {
+    if (file.type.startsWith('video/')) handleVideoFile(file);
+    else if (file.name.endsWith('.srt')||file.name.endsWith('.ass')) handleSubtitleFile(file);
+  }
+});
+document.querySelector('.content-area').addEventListener('dragover', e=>e.preventDefault());
+document.querySelector('.content-area').addEventListener('drop', e => {
+  e.preventDefault();
+  for (const file of e.dataTransfer.files) {
+    if (file.name.endsWith('.srt')||file.name.endsWith('.ass')||file.type==='text/plain') handleSubtitleFile(file);
+  }
+});
+
+// ═══════════════════════════════════════════
+//  Translation (DeepSeek API)
+// ═══════════════════════════════════════════
+async function translateAll() {
+  if (state.isTranslating) return;
+  const apiKey = localStorage.getItem('ds_api_key');
+  if (!apiKey) { toast('请先在设置中配置 API Key', 'error'); openSettings(); return; }
+  const subs = currentSubtitles();
+  if (!subs.length) { toast('请先加载字幕文件', 'error'); return; }
+
+  state.isTranslating = true;
+  document.getElementById('btnTranslate').disabled = true;
+  document.getElementById('btnTranslate').textContent = '⏳ 翻译中...';
+  document.getElementById('progressBar').classList.add('active');
+  document.getElementById('progressFill').style.width = '0%';
+
+  const endpoint = localStorage.getItem('ds_endpoint') || 'https://api.deepseek.com/v1/chat/completions';
+  const model = localStorage.getItem('ds_model') || 'deepseek-chat';
+  const sourceLang = localStorage.getItem('ds_sourceLang') || 'auto';
+  const targetLang = localStorage.getItem('ds_targetLang') || 'Simplified Chinese';
+  const proj = activeProject();
+
+  const BATCH_SIZE = 30;
+  const totalBatches = Math.ceil(subs.length / BATCH_SIZE);
+
+  try {
+    for (let batch = 0; batch < totalBatches; batch++) {
+      const start = batch * BATCH_SIZE;
+      const end = Math.min(start + BATCH_SIZE, subs.length);
+      const batchItems = subs.slice(start, end);
+
+      for (let j = start; j < end; j++) {
+        const dot = document.getElementById(`dot-${j}`);
+        if (dot) dot.className = 'stat-dot translating';
+      }
+
+      const input = batchItems.map((s,i) => `[${i+1}] ${s.text}`).join('\n');
+      const sourceText = sourceLang === 'auto' ? '' : `从${sourceLang}`;
+
+      // Build glossary context
+      let glossContext = '';
+      if (proj && proj.glossary.length) {
+        glossContext = '\n术语表（请严格遵守以下翻译）：\n' +
+          proj.glossary.map(e => `${e.source} → ${e.target} (${e.type})`).join('\n');
+      }
+
+      const prompt = [
+        `你是一个专业的影视字幕翻译专家。请${sourceText}翻译成${targetLang}。`,
+        `严格遵循：1.保持行号[N] 2.口语化、自然，符合影视对白风格 3.保留语气词 4.人名专有名词保留原文 5.短剧角色台词口语化处理 6.每行只输出 [N]译文 7.如果原文含有ASS标签{\\fn...}等，用{t1}{t2}占位符代替并保留在译文中`,
+        glossContext,
+        `\n待翻译内容：\n${input}`
+      ].filter(Boolean).join('\n');
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model, temperature:0.3, max_tokens:4096,
+          messages: [
+            { role:'system', content:'你是一位专业的影视字幕翻译专家，尤其擅长短剧翻译。输出简洁准确，不做额外解释。' },
+            { role:'user', content: prompt }
+          ]
+        })
+      });
+
+      if (!response.ok) throw new Error(`API 错误 (${response.status}): ${await response.text().catch(()=>'')}`);
+
+      const data = await response.json();
+      const result = data.choices?.[0]?.message?.content || '';
+
+      // Parse results
+      const lines = result.split('\n');
+      for (const line of lines) {
+        const m = line.match(/^\[(\d+)\]\s*(.*)/);
+        if (m) {
+          const idx = start + parseInt(m[1]) - 1;
+          if (idx >= 0 && idx < subs.length) {
+            subs[idx].translation = m[2].trim();
+          }
+        }
+      }
+
+      // Update UI
+      for (let j = start; j < end; j++) {
+        const tr = document.querySelector(`#catBody tr[data-idx="${j}"]`);
+        const ta = tr?.querySelector('.cell-tgt');
+        if (ta) ta.textContent = subs[j].translation || '';
+        updateStatusDot(j);
+      }
+
+      const progress = ((batch+1)/totalBatches)*100;
+      document.getElementById('progressFill').style.width = progress+'%';
+    }
+
+    markDirty();
+    updateStatusBar();
+    toast(`翻译完成！${subs.length} 条`, 'success');
+  } catch (err) {
+    toast('翻译失败: '+err.message, 'error');
+    console.error(err);
+  }
+
+  state.isTranslating = false;
+  document.getElementById('btnTranslate').disabled = false;
+  document.getElementById('btnTranslate').textContent = '🤖 翻译全部';
+  document.getElementById('progressBar').classList.remove('active');
+}
+
+// ═══════════════════════════════════════════
+//  Export
+// ═══════════════════════════════════════════
+function findNthComma(str, n) {
+  let idx = -1;
+  for (let i = 0; i <= n; i++) { idx = str.indexOf(',', idx + 1); if (idx < 0) return -1; }
+  return idx;
+}
+
+function generateSRT(items, includeUntranslated, mode) {
+  let idx = 0;
+  const lines = [];
+  for (const item of items) {
+    const hasTrans = item.translation && item.translation.trim();
+    if (!hasTrans && !includeUntranslated && mode !== 'original') continue;
+    idx++;
+    const tags = extractTags(item.text);
+    let text;
+    if (mode === 'original') {
+      text = placeholderToTag(item.text, tags);
+    } else if (mode === 'bilingual') {
+      const orig = placeholderToTag(item.text, tags);
+      const trans = hasTrans ? placeholderToTag(item.translation.trim(), tags) : '';
+      text = orig + '\n' + trans;
+    } else { // translation
+      const raw = hasTrans ? item.translation.trim() : item.text;
+      text = placeholderToTag(raw, tags);
+    }
+    lines.push(`${idx}\n${formatTime(item.startMs)} --> ${formatTime(item.endMs)}\n${text}`);
+  }
+  return lines.join('\n\n') + '\n';
+}
+
+function generateASS(items, ep, mode) {
+  // If we have original ASS source, reconstruct it
+  if (ep && ep.rawSource && mode !== 'original') {
+    let subIdx = 0;
+    return ep.rawSource.split('\n').map(line => {
+      if (/^Dialogue:/.test(line)) {
+        const textComma = findNthComma(line, 8);
+        if (textComma < 0) return line;
+        const sub = items[subIdx] || items[items.length-1];
+        subIdx++;
+        const origText = line.substring(textComma + 1);
+        const origTags = extractTags(origText);
+        let text;
+        if (mode === 'bilingual') {
+          const orig = placeholderToTag(origText, origTags);
+          const trans = (sub.translation && sub.translation.trim()) ? placeholderToTag(sub.translation.trim(), origTags) : '';
+          text = orig + '\\N' + trans;
+        } else { // translation
+          const raw = (sub.translation && sub.translation.trim()) ? sub.translation : sub.text;
+          text = placeholderToTag(raw, origTags);
+        }
+        return line.substring(0, textComma + 1) + text.replace(/\n/g,'\\N');
+      }
+      return line;
+    }).join('\n');
+  }
+  // Fallback: generate basic ASS
+  const hhmmss = ms => { const d=new Date(ms); return String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0')+'.'+String(Math.floor(d.getMilliseconds()/10)).padStart(2,'0'); };
+  let lines = [
+    '[Script Info]',
+    'Title: '+(ep?ep.name:'Untitled'),
+    'ScriptType: v4.00+',
+    'WrapStyle: 0',
+    '',
+    '[V4+ Styles]',
+    'Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding',
+    'Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1',
+    '',
+    '[Events]',
+    'Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text',
+  ];
+  const includeAll = localStorage.getItem('ds_includeUntranslated') !== '0';
+  let idx = 0;
+  for (const item of items) {
+    const hasTrans = item.translation && item.translation.trim();
+    if (!hasTrans && !includeAll && mode !== 'original') continue;
+    idx++;
+    const tags = extractTags(item.text);
+    let text;
+    if (mode === 'original') {
+      text = placeholderToTag(item.text, tags);
+    } else if (mode === 'bilingual') {
+      const orig = placeholderToTag(item.text, tags);
+      const trans = hasTrans ? placeholderToTag(item.translation.trim(), tags) : '';
+      text = orig + '\\N' + trans;
+    } else { // translation
+      const raw = hasTrans ? item.translation.trim() : item.text;
+      text = placeholderToTag(raw, tags);
+    }
+    lines.push(`Dialogue: 0,${hhmmss(item.startMs)},${hhmmss(item.endMs)},${item.styleName||'Default'},,0,0,${item.marginV||0},,${text.replace(/\n/g,'\\N')}`);
+  }
+  lines.push('');
+  return lines.join('\n');
+}
+
+function doExport(mode, fmt) {
+  const subs = currentSubtitles();
+  if (!subs.length) return;
+  const ep = activeEpisode();
+  const proj = activeProject();
+  const includeUntranslated = localStorage.getItem('ds_includeUntranslated') !== '0';
+
+  const content = fmt === 'ass' ? generateASS(subs, ep, mode) : generateSRT(subs, includeUntranslated, mode);
+  const blob = new Blob([content], {type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+
+  const pattern = localStorage.getItem('ds_exportPattern') || '{name}_翻译版';
+  const name = pattern
+    .replace(/\{name\}/g, ep ? ep.name : '字幕')
+    .replace(/\{project\}/g, proj ? proj.name : '项目')
+    .replace(/\{lang\}/g, proj ? proj.targetLang : '');
+  a.download = name + '.' + fmt;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  const skipped = (mode === 'original') ? 0 : subs.filter(s => !(s.translation&&s.translation.trim())).length;
+  const modeLabel = {'original':'原文','translation':'译文','bilingual':'双语'}[mode]||mode;
+  toast(`导出 ${modeLabel} ${fmt.toUpperCase()} 成功！${skipped?'跳过'+skipped+'行 ':''}共${subs.length}条`, 'success');
+}
+
+function openExportModal() {
+  const subs = currentSubtitles();
+  if (!subs.length) { toast('没有字幕可导出', 'error'); return; }
+  document.getElementById('exportModal').classList.add('open');
+}
+function closeExportModal() {
+  document.getElementById('exportModal').classList.remove('open');
+}
+function selectExportOpt(el) {
+  const group = el.parentNode;
+  group.querySelectorAll('.export-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function confirmExport() {
+  const mode = document.querySelector('#exportContentGroup .export-opt.selected')?.dataset.value || 'translation';
+  const fmt = document.querySelector('#exportFmtGroup .export-opt.selected')?.dataset.value || 'srt';
+  closeExportModal();
+  doExport(mode, fmt);
+}
+
+// ═══════════════════════════════════════════
+//  Settings
+// ═══════════════════════════════════════════
+const SETTINGS_KEYS = ['apiKey','apiEndpoint','modelName','sourceLang','targetLang',
+  'fontSize','charLimit','tabAdvance','includeUntranslated','exportPattern'];
+
+function loadSettings() {
+  for (const key of SETTINGS_KEYS) {
+    const el = document.getElementById(key);
+    const val = localStorage.getItem('ds_'+key);
+    if (val !== null) {
+      if (el.tagName === 'SELECT') el.value = val;
+      else el.value = val;
+    }
+  }
+}
+function saveSettings() {
+  for (const key of SETTINGS_KEYS) {
+    localStorage.setItem('ds_'+key, document.getElementById(key).value);
+  }
+  const proj = activeProject();
+  if (proj) {
+    proj.targetLang = document.getElementById('targetLang').value;
+    markDirty();
+  }
+  closeSettings();
+  applySettings();
+  toast('设置已保存', 'success');
+}
+
+function applySettings() {
+  const fs = parseInt(localStorage.getItem('ds_fontSize')) || 12;
+  const el = document.getElementById('catTable');
+  el.classList.remove('size-11','size-12','size-13','size-14');
+  el.classList.add('size-'+fs);
+}
+function openSettings() { loadSettings(); document.getElementById('settingsModal').classList.add('open'); }
+function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); }
+
+// ═══════════════════════════════════════════
+//  Video Panel Sizing
+// ═══════════════════════════════════════════
+function updateVideoPanelWidth() {
+  const panel = document.querySelector('.video-panel');
+  if (!panel) return;
+  const vh = window.innerHeight;
+  const headerH = document.querySelector('header').offsetHeight;
+  const toolbarH = document.querySelector('.toolbar').offsetHeight;
+  const controls = document.querySelector('.video-controls');
+  const controlsH = controls ? controls.offsetHeight : 40;
+  const videoAreaH = vh - headerH - toolbarH - controlsH;
+  if (videoAreaH > 0) panel.style.width = Math.round(videoAreaH * 9 / 16) + 'px';
+}
+
+// ═══════════════════════════════════════════
+//  UI Helpers
+// ═══════════════════════════════════════════
+let toastTimer;
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'toast '+type;
+  clearTimeout(toastTimer);
+  void el.offsetWidth;
+  el.classList.add('show');
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+function checkVersion() {
+  fetch('version.json?t=' + Date.now())
+    .then(r => r.json())
+    .then(v => {
+      if (v.version && v.version !== APP_VERSION) {
+        const note = v.note ? ' — ' + v.note : '';
+        toast('🔄 有新版本可用，请刷新页面' + note, 'info');
+      }
+    })
+    .catch(() => {});
+}
+
+// ═══════════════════════════════════════════
+//  Init
+// ═══════════════════════════════════════════
+loadSettings();
+initDefault();
+applySettings();
+checkVersion();
+
+updateVideoPanelWidth();
+
+// Debug: check state after load
+setTimeout(() => {
+  const ep = activeEpisode();
+  console.log('INIT CHECK:', { 
+    epName: ep ? ep.name : 'NONE', 
+    epIdx: state.activeEpisodeIdx,
+    hasRaw: ep ? !!ep.rawSource : false,
+    rawType: ep ? typeof ep.rawSource : 'N/A',
+    subCount: ep ? ep.subtitles.length : 0,
+    styleNames: ep ? [...new Set(ep.subtitles.map(s => s.styleName).filter(Boolean))] : [],
+  });
+  if (ep) {
+    const styles = getAssStyles();
+    console.log('STYLES after init:', Object.keys(styles));
+  }
+}, 500);
+
+window.addEventListener('resize', updateVideoPanelWidth);
+
+console.log('🎬 短剧字幕翻译器 v0.3 — Dramalator 蒸馏版');
+console.log('📋 侧边栏切换管理剧集/术语库');
+console.log('📌 阶段工作流: 编辑→校对→提交→返稿');
+console.log('💡 Tab=下一条, Shift+Tab=上一条, Cmd+↓=跳转空行, Space=播放/暂停');
+</script>
+
+</body>
+</html>
