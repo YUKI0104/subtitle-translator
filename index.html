@@ -8418,6 +8418,8 @@ function generateSRT(episode, mode, includeUntranslated) {
     var text = getExportText(s, mode);
     if (!text && !includeUntranslated) continue;
     var displayText = text || s.text || '';
+    // Strip ASS tags {\\k20} and T-placeholders {T1} / T1 for plain-text SRT
+    displayText = displayText.replace(/\{[^}]*\}/g, '').replace(/\{?T\d+\}?/g, '').replace(/\s+/g, ' ').trim();
     lines.push(s.index || (i + 1));
     lines.push(formatTimeSRT(s.startMs) + ' --> ' + formatTimeSRT(s.endMs));
     lines.push(displayText);
@@ -8446,6 +8448,9 @@ function generateASS(episode, mode, includeUntranslated) {
     var text = getExportText(s, mode);
     if (!text && !includeUntranslated) continue;
     var displayText = text || s.text || '';
+    // Restore original ASS tags from T-placeholders (T1 → {\\k20})
+    var origTags = s.text ? extractTags(s.text) : [];
+    if (origTags.length) displayText = placeholderToTag(displayText, origTags);
     var styleName = s.styleName || 'Default';
     var marginL = s.marginL || 0;
     var marginR = s.marginR || 0;
