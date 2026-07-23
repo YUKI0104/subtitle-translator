@@ -1537,7 +1537,7 @@ function _cleanInvisibleChars(obj) {
 
 function initDefault() {
   // Apply saved theme
-  var savedTheme = localStorage.getItem('st_theme') || '1';
+  var savedTheme = localStorage.getItem('st_theme') || '3';
   document.documentElement.classList.add('theme-' + savedTheme);
   const saved = localStorage.getItem('st_state');
   if (saved) {
@@ -8117,7 +8117,7 @@ function confirmExport() {
 // ═══════════════════════════════════════════
 
 function loadSettings() {
-  var curTheme = localStorage.getItem('st_theme') || '1';
+  var curTheme = localStorage.getItem('st_theme') || '3';
   var sel = document.getElementById('themeSelector');
   if (sel) sel.value = curTheme;
   var el = document.getElementById('fontSize');
