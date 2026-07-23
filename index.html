@@ -5580,18 +5580,6 @@ const PLATFORMS = {
     balanceEndpoint: 'https://api.siliconflow.cn/v1/user/info',
     pricing: { inputPerM: 2, outputPerM: 3, currency: '¥', url: 'https://siliconflow.cn/pricing' },
   },
-  kuaipao: {
-    id: 'kuaipao', name: '快跑 (kuaipao.pro)',
-    endpoint: 'https://kuaipao-proxy.qiuxueqian1995.workers.dev',
-    model: 'claude-sonnet-5',
-    models: [
-      { id: 'claude-sonnet-5', name: 'Claude Sonnet 5', inputPerM: 0, outputPerM: 0 },
-      { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro', inputPerM: 0, outputPerM: 0 },
-    ],
-    apiKeyHelp: '<a href="https://kuaipao.pro" target="_blank">kuaipao.pro</a> 获取 Key',
-    helpBalance: '即用即付',
-    pricing: { inputPerM: 0, outputPerM: 0, currency: '¥', url: '' },
-  },
 };
 
 // Task-specific model configuration
@@ -5726,6 +5714,15 @@ const PRESET_PROVIDERS = {
     helpBalance: '<a href="https://openrouter.ai/activity" target="_blank">用量</a>',
     balanceEndpoint: 'https://openrouter.ai/api/v1/auth/key',
     pricing: { inputPerM: 2.5, outputPerM: 10, currency: '$', url: 'https://openrouter.ai/models' },
+  },
+  kuaipao: {
+    id: 'kuaipao', name: '快跑 (kuaipao.pro)',
+    endpoint: 'https://kuaipao-proxy.qiuxueqian1995.workers.dev',
+    model: '',
+    models: [],
+    apiKeyHelp: '<a href="https://kuaipao.pro" target="_blank">kuaipao.pro</a> 获取 Key',
+    helpBalance: '即用即付',
+    pricing: { inputPerM: 0, outputPerM: 0, currency: '¥', url: '' },
   },
 };
 
@@ -6403,36 +6400,36 @@ function openPlatformEditModal(id) {
     (!endpoint ? '<div style="font-size:11px;color:var(--text-dim);margin-top:2px;font-family:var(--mono);word-break:break-all">默认: ' + escHtml(defaultEp) + '</div>' : '') +
   '</div>';
 
-  // Model (text input + fetch for custom, list for preset)
-  if (id.startsWith('custom_')) {
-    html += '<div style="margin-bottom:10px">' +
-      '<div style="font-size:13px;color:var(--text-dim);margin-bottom:4px">模型 ID</div>' +
-      '<div style="display:flex;gap:8px">' +
-        '<input type="text" id="editModelInput" value="' + escHtml(curModel || '') + '" placeholder="如 gpt-4o-mini" style="flex:1;padding:7px 8px;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;font-family:var(--mono)">' +
-        '<button onclick="fetchCustomModels(\x27' + id + '\x27)" style="cursor:pointer;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-size:11px;font-family:var(--font);white-space:nowrap">拉取列表</button>' +
-      '</div>' +
-      '<div id="fetchedModelsWrap" style="margin-top:6px;display:none">' +
-        '<div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">点击选择模型：</div>' +
-        '<div id="fetchedModelsList" style="display:flex;flex-wrap:wrap;gap:4px;max-height:120px;overflow-y:auto"></div>' +
-      '</div>' +
-    '</div>';
-  } else if (p.models && p.models.length) {
-    html += '<div style="margin-bottom:8px">' +
-      '<div style="font-size:13px;color:var(--text-dim);margin-bottom:6px">模型</div>';
-    for (const m of p.models) {
-      const sel = m.id === curModel;
-      const freeTag = m.free ? '<span style="color:var(--success);font-size:10px">免费</span>' : '';
-      const priceStr = m.free ? '免费' : sym + m.inputPerM + '/' + sym + m.outputPerM + '/M';
-      html += '<div class="model-opt" onclick="selectEditModel(\x27' + m.id + '\x27)" data-model="' + m.id + '" style="cursor:pointer;padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;' +
-        (sel ? 'color:#fff;background:var(--accent);border:1px solid var(--accent)' : 'border:1px solid var(--border)') + '">' +
-        '<span>' + escHtml(m.name) + ' ' + freeTag + '</span>' +
-        '<span style="color:' + (sel ? '#fff' : 'var(--text-dim)') + ';font-size:11px;font-family:var(--mono)">' + priceStr + '</span>' +
-      '</div>';
-    }
-    html += '</div>';
-  }
-
-  // Pricing + links
+  	  // Model: dropdown for preset platforms + text input for all
+	  var hasModels = p.models && p.models.length;
+	  if (hasModels) {
+	    html += '<div style="margin-bottom:4px">' +
+	      '<div style="font-size:13px;color:var(--text-dim);margin-bottom:6px">模型</div>';
+	    for (const m of p.models) {
+	      const sel = m.id === curModel;
+	      const freeTag = m.free ? '<span style="color:var(--success);font-size:10px">免费</span>' : '';
+	      const priceStr = m.free ? '免费' : sym + m.inputPerM + '/' + sym + m.outputPerM + '/M';
+	      html += '<div class="model-opt" onclick="selectEditModel('' + m.id + '')" data-model="' + m.id + '" style="cursor:pointer;padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;' +
+	        (sel ? 'color:#fff;background:var(--accent);border:1px solid var(--accent)' : 'border:1px solid var(--border)') + '">' +
+	        '<span>' + escHtml(m.name) + ' ' + freeTag + '</span>' +
+	        '<span style="color:' + (sel ? '#fff' : 'var(--text-dim)') + ';font-size:11px;font-family:var(--mono)">' + priceStr + '</span>' +
+	      '</div>';
+	    }
+	    html += '</div>';
+	  }
+	  // Custom model input (always shown for all platforms)
+	  html += '<div style="margin-bottom:10px">' +
+	    '<div style="font-size:13px;color:var(--text-dim);margin-bottom:4px">' + (hasModels ? '或输入自定义模型 ID' : '模型 ID') + '</div>' +
+	    '<div style="display:flex;gap:8px">' +
+	      '<input type="text" id="editModelInput" value="' + escHtml(hasModels ? '' : (curModel || '')) + '" placeholder="如 claude-sonnet-5 / deepseek-v4-pro" style="flex:1;padding:7px 8px;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;font-family:var(--mono)">' +
+	      '<button onclick="fetchCustomModels('' + id + '')" style="cursor:pointer;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-size:11px;font-family:var(--font);white-space:nowrap">拉取列表</button>' +
+	    '</div>' +
+	    '<div id="fetchedModelsWrap" style="margin-top:6px;display:none">' +
+	      '<div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">点击选择模型：</div>' +
+	      '<div id="fetchedModelsList" style="display:flex;flex-wrap:wrap;gap:4px;max-height:120px;overflow-y:auto"></div>' +
+	    '</div>' +
+	  '</div>';
+	    // Pricing + links
   html += '<div style="font-size:11px;color:var(--text-dim);margin-top:8px">' +
     (p.apiKeyHelp || '') + (p.apiKeyHelp && p.helpBalance ? ' · ' : '') + (p.helpBalance || '') +
   '</div>';
@@ -6575,7 +6572,20 @@ function savePlatformEdit() {
     localStorage.removeItem('ds_endpoint_' + _editingPlatformId);
   }
 
-  // Custom platform: save name + model
+  // Save model from custom input (for all platforms)
+  var modelInput = document.getElementById('editModelInput');
+  if (modelInput) {
+    var newModel = modelInput.value.trim();
+    if (newModel) {
+      localStorage.setItem('ds_model_' + _editingPlatformId, newModel);
+      if (PLATFORMS[_editingPlatformId]) {
+        PLATFORMS[_editingPlatformId].model = newModel;
+        PLATFORMS[_editingPlatformId].models = [{ id: newModel, name: newModel, inputPerM: 0, outputPerM: 0 }];
+      }
+    }
+  }
+
+  // Custom platform: save name
   if (_editingPlatformId.startsWith('custom_')) {
     var nameInput = document.getElementById('editPlatformNameInput');
     if (nameInput) {
@@ -6587,27 +6597,6 @@ function savePlatformEdit() {
         for (var d = 0; d < defs.length; d++) {
           if (defs[d].id === _editingPlatformId) {
             defs[d].name = newName;
-            break;
-          }
-        }
-        localStorage.setItem(CUSTOM_DEFS_KEY, JSON.stringify(defs));
-      }
-    }
-    var modelInput = document.getElementById('editModelInput');
-    if (modelInput) {
-      var newModel = modelInput.value.trim();
-      if (newModel) {
-        localStorage.setItem('ds_model_' + _editingPlatformId, newModel);
-        if (PLATFORMS[_editingPlatformId]) {
-          PLATFORMS[_editingPlatformId].model = newModel;
-          PLATFORMS[_editingPlatformId].models = [{ id: newModel, name: newModel, inputPerM: 0, outputPerM: 0 }];
-        }
-        // Update stored definition
-        var defs = JSON.parse(localStorage.getItem(CUSTOM_DEFS_KEY) || '[]');
-        for (var d = 0; d < defs.length; d++) {
-          if (defs[d].id === _editingPlatformId) {
-            defs[d].model = newModel;
-            defs[d].endpoint = ep || defs[d].endpoint;
             break;
           }
         }
