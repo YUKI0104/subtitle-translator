@@ -990,13 +990,16 @@ header h1 .tag {
 
     <div class="ssec">
       <div class="ssec-title">🎨 主题</div>
-      <div class="ssec-body">
-        <select id="themeSelector" onchange="switchTheme(parseInt(this.value))" style="width:100%;padding:6px 10px;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:var(--fs,13px);outline:none;cursor:pointer;font-family:var(--font)">
-          <option value="1">☀️ 暖煦·日间</option>
-          <option value="2">🌙 暖煦·夜间</option>
-          <option value="3">🌤 青岚·日间</option>
-          <option value="4">🌌 青岚·夜间</option>
+      <div class="ssec-body" style="display:flex;align-items:center;gap:8px">
+        <select id="themePairSelector" onchange="onThemePairChange(this.value)" style="flex:1;padding:6px 10px;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:var(--fs,13px);outline:none;cursor:pointer;font-family:var(--font)">
+          <option value="1">🌅 暖煦</option>
+          <option value="2">🌿 青岚</option>
         </select>
+        <button id="themeToggleBtn" onclick="toggleDayNight()" style="width:34px;height:34px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .2s">☀️</button>
+        <label style="display:flex;align-items:center;gap:4px;cursor:pointer;white-space:nowrap;font-size:12px;color:var(--text-dim);flex-shrink:0;user-select:none">
+          <input type="checkbox" id="followSystemCheck" onchange="onFollowSystemChange(this.checked)" style="accent-color:var(--accent)">
+          跟随系统
+        </label>
       </div>
     </div>
 
@@ -1653,9 +1656,8 @@ function _cleanInvisibleChars(obj) {
 }
 
 function initDefault() {
-  // Apply saved theme
-  var savedTheme = localStorage.getItem('st_theme') || '1';
-  document.documentElement.classList.add('theme-' + savedTheme);
+  // Apply saved theme (via initTheme, includes backward compat)
+  initTheme();
   const saved = localStorage.getItem('st_state');
   if (saved) {
     try {
@@ -2627,14 +2629,70 @@ async function openLibraryModal(tab) {
   document.getElementById('libraryModal').classList.add('open');
 }
 
-function switchTheme(n) {
+// ── Theme system ──
+var _themePair = 1;    // 1=暖煦, 2=青岚
+var _themeVariant = 1; // 1=day, 2=night
+var _followSystem = false;
+
+function applyTheme() {
+  var dark = _followSystem ? window.matchMedia('(prefers-color-scheme: dark)').matches : _themeVariant === 2;
+  var n = (_themePair - 1) * 2 + (dark ? 2 : 1);
   var cur = document.documentElement;
   cur.classList.remove('theme-1','theme-2','theme-3','theme-4');
   cur.classList.add('theme-' + n);
-  localStorage.setItem('st_theme', String(n));
-  var sel = document.getElementById('themeSelector');
-  if (sel) sel.value = String(n);
+  localStorage.setItem('st_themePair', String(_themePair));
+  localStorage.setItem('st_themeVariant', String(_themeVariant));
+  localStorage.setItem('st_followSystem', _followSystem ? '1' : '0');
+  // Update UI
+  var btn = document.getElementById('themeToggleBtn');
+  if (btn) { btn.textContent = dark ? '🌙' : '☀️'; btn.disabled = _followSystem; }
+  var cb = document.getElementById('followSystemCheck');
+  if (cb) cb.checked = _followSystem;
+  var sel = document.getElementById('themePairSelector');
+  if (sel) sel.value = String(_themePair);
+}
+
+function onThemePairChange(val) {
+  _themePair = parseInt(val);
+  applyTheme();
   toast('已切换主题', 'success');
+}
+
+function toggleDayNight() {
+  if (_followSystem) return;
+  _themeVariant = _themeVariant === 1 ? 2 : 1;
+  applyTheme();
+}
+
+function onFollowSystemChange(checked) {
+  _followSystem = checked;
+  if (checked) {
+    _themeVariant = window.matchMedia('(prefers-color-scheme: dark)').matches ? 2 : 1;
+  }
+  applyTheme();
+}
+
+function initTheme() {
+  // Backward compat: migrate old st_theme
+  var oldTheme = localStorage.getItem('st_theme');
+  if (oldTheme && !localStorage.getItem('st_themePair')) {
+    var t = parseInt(oldTheme) || 1;
+    _themePair = Math.ceil(t / 2);
+    _themeVariant = (t % 2 === 0) ? 2 : 1;
+  } else {
+    _themePair = parseInt(localStorage.getItem('st_themePair')) || 1;
+    _themeVariant = parseInt(localStorage.getItem('st_themeVariant')) || 1;
+  }
+  _followSystem = localStorage.getItem('st_followSystem') === '1';
+  // Listen for system dark mode changes
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  mq.addEventListener('change', function(e) {
+    if (_followSystem) {
+      _themeVariant = e.matches ? 2 : 1;
+      applyTheme();
+    }
+  });
+  applyTheme();
 }
 
 function closeLibraryModal() {
@@ -8234,9 +8292,11 @@ function confirmExport() {
 // ═══════════════════════════════════════════
 
 function loadSettings() {
-  var curTheme = localStorage.getItem('st_theme') || '1';
-  var sel = document.getElementById('themeSelector');
-  if (sel) sel.value = curTheme;
+  var curPair = localStorage.getItem('st_themePair') || '1';
+  var sel = document.getElementById('themePairSelector');
+  if (sel) sel.value = curPair;
+  var cb = document.getElementById('followSystemCheck');
+  if (cb) cb.checked = localStorage.getItem('st_followSystem') === '1';
   var el = document.getElementById('fontSize');
   if (el) el.value = localStorage.getItem('ds_fontSize') || '16';
   el = document.getElementById('charLimit');
