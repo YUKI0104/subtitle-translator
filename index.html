@@ -5717,7 +5717,7 @@ const PRESET_PROVIDERS = {
   },
   kuaipao: {
     id: 'kuaipao', name: '快跑 (kuaipao.pro)',
-    endpoint: 'https://kuaipao.pro/v1/chat/completions',
+    endpoint: 'https://kuaipao-proxy.qiuxueqian1995.workers.dev',
     models: [
       { id: 'claude-sonnet-5', name: 'Claude Sonnet 5', inputPerM: 0, outputPerM: 0 },
       { id: 'claude-fable-5', name: 'Claude Fable 5', inputPerM: 0, outputPerM: 0 },
@@ -7612,6 +7612,8 @@ async function translateAll() {
         var pct = Math.round((translated / total) * 100);
         showExtractProgress('正在翻译…（' + translated + '/' + total + ' 条）', pct);
         markDirty();
+        // 批次间延迟，避免 API 限流
+        await new Promise(function(r){ setTimeout(r, 2000); });
       } catch (err) {
         if (retries >= maxRetries) {
           hideExtractProgress();
