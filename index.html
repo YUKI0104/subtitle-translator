@@ -2764,7 +2764,7 @@ function renderDashboardPanel(body, title, actions) {
   // Recovery: data may have been corrupted by previous bugs
   html += '<div class="dash-section-title" style="margin-top:16px;color:var(--danger)"><i class="ri-alert-line"></i> 数据恢复</div>';
   html += '<div style="font-size:11px;color:var(--text-dim);padding:0 12px 8px;line-height:1.5">如果项目数据异常（所有剧集丢失），可以重置本地存储后重新打开文件夹。</div>';
-  html += '<div style="padding:0 12px"><button class="btn btn-sm" onclick="if(confirm('确定清空所有本地数据？此操作不可撤销。请先确认已保存 project.json 到文件夹。')){localStorage.removeItem('st_state');localStorage.removeItem('st_lastFolder');location.reload();}" style="color:var(--danger);border-color:var(--danger)"><i class="ri-delete-bin-line"></i> 清空本地数据并刷新</button></div>';
+  html += '<div style="padding:0 12px"><button class="btn btn-sm" onclick="if(confirm(\'确定清空所有本地数据？此操作不可撤销。请先确认已保存 project.json 到文件夹。\')){localStorage.removeItem(\'st_state\');localStorage.removeItem(\'st_lastFolder\');location.reload();}" style="color:var(--danger);border-color:var(--danger)"><i class="ri-delete-bin-line"></i> 清空本地数据并刷新</button></div>';
 
   body.innerHTML = html;
 }
