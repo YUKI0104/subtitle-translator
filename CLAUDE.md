@@ -4,17 +4,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-Single-file HTML application (`index.html`, 6050 lines / 281KB) for translating short-drama subtitles with AI. Pure client-side, no build step, no server, no dependencies. Run directly in browser via `file://` or any static HTTP server.
+Single-file HTML application (`index.html`, ~8700 lines / 404KB) for translating short-drama subtitles with AI. Pure client-side, no build step, no server, no dependencies. Run directly in browser via `file://` or any static HTTP server.
+
+**App name:** Dramalator (title in `<head>`)
+**Version:** `APP_VERSION` constant at line 1602, also in `version.json`
 
 ## File Structure
 
 | File | Purpose |
 |---|---|
-| `index.html` | The entire application (CSS lines 8–487 · HTML 488–855 · JS 856–6050) |
-| `version.json` | Version metadata for update checking (`APP_VERSION` constant also in JS line 857) |
+| `index.html` | Entire application (CSS lines 8–1143, HTML 1146–1599, JS 1601–8721) |
+| `version.json` | Version metadata for update checking |
 | `CLAUDE.md` | This file |
-| `_fix_*.py` | One-off Python scripts used for specific past edits — not part of the app |
+| `_fix_*.py` | One-off Python scripts for targeted edits — not part of the app |
 | `korean-minimal-*` | Design exploration artifacts, not part of the active app |
+| `kuaipao-worker.js` | Cloudflare Worker proxy for kuaipao.pro API (CORS bypass) |
+| `kuaipao-deno.ts` | Deno variant of the kuaipao proxy |
+| `server.py` | Local dev server with CORS proxy for kuaipao.pro |
 | `skills/` | Claude Code skill definitions |
 
 ## Development
@@ -28,107 +34,110 @@ npx serve .                       # if you prefer
 
 No tests, no linter, no package.json, no build pipeline. Manual QA only.
 
-## Key Architecture (JS lines 856–6050)
+## Key Architecture (JS lines 1601–8721)
 
-### State Model (line 862)
+### State Model (line 1762)
 
-Global `state` object:
-- `projects[]` — Array of projects
-- `activeProjectIdx`, `activeEpisodeIdx` — Current selection
-- `phase` — Workflow phase: `editing → proofreading → review → submitted`
+Global `state` object with `_saveDirty` flag for debounced persistence:
 
-Per project:
+```js
+const state = {
+  projects: [],           // Array of project objects
+  activeProjectIdx: -1,
+  activeEpisodeIdx: -1,
+  sidebarTab: 'dashboard',  // 'dashboard' | 'episodes' | 'aisettings'
+  sidebarOpen: true,
+  phase: 'editing',         // editing → proofreading → review → submitted
+  // search, filter, currentSubIdx, _saveDirty
+};
+```
+
+Each project object:
 - `episodes[]` — Each has `subtitles[]` (array of `{index, startMs, endMs, text, translation, status, styleName}`)
 - `glossary[]` — Project-scoped glossary (synced to project's `glossary.tbx`)
 - `memoryBank[]` — Translation memory (synced to libraries dir's `memory.tbx`)
 - `globalGlossary[]` — Global glossary (synced to libraries dir's `glossary.tbx`)
 - `knowledgeBase[]` — Knowledge base entries (synced to `*.md` files in libraries dir)
-
-State persisted to `localStorage` under key `st_state`; also serializable to `project.json` for folder-backed projects.
+- `projectDirName` — Tracks which folder a project is bound to (prevents cross-contamination)
 
 ### Key JS Sections (line-number anchored)
 
 | Section | Lines | Description |
 |---|---|---|
-| Constants & Globals | 857–884 | `APP_VERSION`, `state`, `PHASES`, `STATUS_LABELS`, CPS_LIMIT, dir handles |
-| Init & Persistence | 998–1060 | `initDefault()`, `saveState()`, `markDirty()` (500ms debounced auto-save) |
-| Sidebar Panel System | 1062–1635 | `switchSidebar()`, `renderSidebarPanel()` dispatches to 5 panels |
-| Dashboard Panel | 1635–1725 | Overview counts, status, save/load/new folder actions |
-| Episodes Panel | 1090–1120 | Episode list in sidebar |
-| **Libraries Panel** | 1121–1193 | 4 library cards + dir config UI |
-| Library Dir Picker | 1195–1210 | `pickLibrariesDir()` via File System Access API |
-| Library Disk Loading | 1212–1250 | `loadLibrariesFromDisk()` — reads TBX/MD files |
-| AI Settings Panel | 1252–1628 | Platform selection, model config, task definitions |
-| Tools Panel | 1629–1634 | (deprecated, shows migration notice) |
-| Library Modal | 1827–2205 | 4-tab modal (记忆库/全局术语库/项目术语库/知识库) with add/delete/import/search |
-| **TBX Utilities** | 2207–2289 | `_tbxEscape`, `_tbxBuild`, `_tbxParse`, `loadTBX`, `saveTBX` |
-| **MD Utilities** | 2293–2346 | `loadKnowledgeMD`, `saveKnowledgeMD`, `deleteKnowledgeMD` |
-| **File Sync** | 2351–2381 | `saveMemoryBankToFile`, `saveGlobalGlossaryToFile`, `saveProjectGlossaryToFile` |
-| Phase Workflow | 2384–2425 | 4-stage pipeline with clickable phase steps |
-| Subtitle Parsing | 2467–2865 | `parseSRT()`, `extractTags()`, `parseASS()`, `parseASSStyles()` |
-| Folder Project I/O | 2936–3265 | `importFolder()`, `openProjectFromFolder()`, `saveProjectToFolder()`, `createProjectInFolder()`, `readDirFiles()`, readDirVideoFiles, unbind |
-| CAT Table | 3280–3515 | `renderSubtitles()` — the main editing grid with contenteditable cells |
-| Video Player | 3532–3790 | Video element, seek bar, playback controls, segment looping |
-| AI Platforms | 3872–4340 | Built-in platform definitions (DeepSeek, OpenAI, GLM, etc.) |
-| Custom Platforms | 4351–4760 | User-defined API platforms, balance check, model fetching |
-| Model Config | 1450–1600 | Per-task model selection, key visibility toggle, platform picker |
-| Term Extraction | 4817–5163 | Local n-gram extraction + AI term extraction flow |
-| Bulk Translation | 5171–5500 | Term translate flow with confirmation modal, batch episode translate |
-| Translation Engine | 5368–5515 | `translateAll()` — progressive batch translation |
-| Batch Translate | 5527–5626 | Cross-episode batch translation modal |
-| Batch Translate Core | 5614–5780 | `batchTranslateEpisodes()` — multi-episode AI translation with marker-based result parsing |
-| Export | 5825–5975 | SRT/ASS export with mode (all/draft/confirmed) and range options |
-| Settings | 5983–6035 | `loadSettings()`, `saveSettings()`, font size, language, video panel width |
+| IndexedDB handle persistence | 1603–1662 | Store/load/delete File System Access handles |
+| Language utilities | 1663–1759 | Language picker, TBX language mapping |
+| State model & init | 1762–2002 | `state`, `PHASES`, `initDefault()`, `saveState()`, `markDirty()` |
+| Sidebar panel system | 2014–2139 | `switchSidebar()`, `renderSidebarPanel()` → 3 panels |
+| Libraries modal | 2923–3784 | 4-tab modal (memory/globalGlossary/projectGlossary/knowledge) with add/delete/import |
+| **Theme system** | 2954–3016 | 8 themes (4 pairs × day/night), follow-system, `applyTheme()` |
+| TBX utilities | 3787–3999 | `_tbxBuild`, `_tbxParse`, `loadTBX`, `saveTBX`, knowledge MD helpers |
+| **Memory bank system** | 4001–4249 | Auto-matching, promotion, file sync to memory.tbx |
+| Phase workflow | 4253–4293 | 4-stage pipeline with clickable phase steps |
+| Subtitle parsing | 4336–4770 | `parseSRT()`, `extractTags()`, `placeholderToTag()`, `parseASS()`, `parseASSStyles()` |
+| Folder project I/O | 4923–5192 | `importFolder()`, `openProjectFromFolder()`, `saveProjectToFolder()`, `createProjectInFolder()`, `readDirFiles()` |
+| CAT Table | 5263–5484 | `renderSubtitles()` — contenteditable grid, memory highlighting, style display |
+| Video Player | 5709–5864 | Video element, seek bar, playback controls, segment looping |
+| AI Platforms | 6012–6393 | Built-in platform definitions (DeepSeek, OpenAI, GLM, etc.) with pricing |
+| Custom Platforms | 6722–7116 | User-defined API platforms, balance check, model fetching |
+| Term Extraction | 7142–7624 | Local n-gram extraction + AI term classification flow |
+| AI Translation | 7722–8428 | `translateAll()` — progressive batch, marker-based result parsing, batch cross-episode |
+| Export | 8439–8628 | SRT/ASS export with mode (all/draft/confirmed) and range options |
+| Settings | 8629–8721 | Font size, language, video panel width, video skip mode |
 
-### File Persistence — Library System
+### Theme System (line 2954)
 
-**Directory layout** (user picks once via `showDirectoryPicker()`):
-
-```
-/downloads/Dramalator/            ← Libraries dir (_librariesDirHandle)
-├── memory.tbx                    ← 记忆库 (TBX)
-├── glossary.tbx                  ← 全局术语库 (TBX)
-├── how-to-translate.md           ← 知识库 (any .md files)
-├── style-guide.md
-└── 项目/                         ← Project dir (_projectDirHandle)
-    ├── project.json
-    ├── glossary.tbx              ← 项目术语库 (TBX)
-    └── subtitles...
-```
-
-**TBX format**: Minimal valid TBX (TermBase eXchange) XML with `<martif>`, `<termEntry>`, `<langSet>`, `<tig>`, `<term>` elements. Each entry: `{id, source, target}`.
-
-**MD format**: Each knowledge-base entry is one `.md` file. The filename (with `.md` removed) is the entry's display title.
-
-**Fallback**: When no library/project directory handles are available, all data works in-memory and serializes to localStorage/project.json.
+CSS variable-based theming with 8 theme blocks (`:root.theme-1` through `.theme-8`):
+- **Theme pairs:** 1=暖煦, 2=青岚, 3=赛博, 4=墨韵 (each with day/night variant)
+- Variant calculation: `n = (pair - 1) * 2 + (dark ? 2 : 1)`
+- `_followSystem` checkbox enables `prefers-color-scheme` media query
+- Theme name mapping: `['暖煦日','暖煦夜','青岚日','青岚夜','赛博日','赛博夜','墨韵日','墨韵夜']`
 
 ### Effect Tag System
 
-ASS effect tags (`\k`, `\pos`, `\fad`, etc.) extracted to `{t1}`, `{t2}` style placeholders in source text → rendered as 🏷️ `T1`, `T2` chips. Translation column shows same placeholders; restored on export.
+ASS effect tags (`\k`, `\pos`, `\fad`, etc.) extracted to `{T1}`, `{T2}` placeholders in source text → rendered as `🏷️ T1`, `T2` chips in CAT table. Translation column shows same placeholders. **On ASS export:** placeholders restored to original tags. **On SRT export:** both placeholders and tags stripped, leaving plain text.
+
+Key functions: `extractTags()` (line 4373), `placeholderToTag()` (line 4382)
+
+### File Persistence — Library System (lines 2067–2139)
+
+User picks a libraries directory once via `showDirectoryPicker()`. Directory layout:
+
+```
+/user-chosen-dir/          ← Libraries dir (_librariesDirHandle)
+├── memory.tbx             ← Translation memory
+├── glossary.tbx           ← Global glossary
+├── how-to-translate.md    ← Knowledge base (any .md files)
+└── project-dir/           ← Project dir (_projectDirHandle)
+    ├── project.json       ← Full project state
+    ├── glossary.tbx       ← Project glossary
+    └── subtitles...
+```
+
+TBX format: Minimal valid TermBase eXchange XML with `<martif>`, `<termEntry>`, `<langSet>`, `<tig>`, `<term>` elements. MD format: each entry is one `.md` file; filename (without `.md`) is the display title.
+
+**Two persistence layers:**
+1. `localStorage` key `st_state` — saves all projects (via `saveState()`, debounced 500ms via `markDirty()`)
+2. `project.json` file in project folder (via `saveProjectToFolder()`) — only saves `activeProject()` to `_projectDirHandle`
+
+**Critical:** `_projectDirHandle` is a global variable. Switching projects clears it (`_projectDirHandle = null` in `switchProject()`) to prevent auto-save from writing wrong project data into a folder. Per-project `projectDirName` field enables safe folder matching in `saveState()`.
 
 ### AI Translation Flow
 
-1. Batch subtitles according to model's context budget (CPS_LIMIT=15, per-model limits in `MODEL_CONTEXT_LIMITS` at line 4763)
+1. Batch subtitles according to model's context budget (CPS_LIMIT=15, per-model limits in `MODEL_CONTEXT_LIMITS`)
 2. Send to OpenAI-compatible API with glossary as few-shot examples
 3. Parse response — supports markers `[E{n}][{m}]` for parallel translation, with positional fallback for unmarked lines
 4. Apply translation to subtitle rows, set status = 'draft'
 5. Try fallback model on 401 errors
 
-### Subtitling Data Flow
+### Important Gotchas
 
-1. Load subtitles (SRT/ASS file drag-drop, or folder import) → parse → create episodes
-2. Each subtitle row rendered in CAT table (source + editable translation)
-3. User translates manually, via term extraction + batch term translate, or full AI translation
-4. Export as SRT or ASS (with effect tags restored)
-5. State persisted to localStorage and/or `project.json` in folder
-
-## Important Gotchas
-
-- **Edit tool often fails on large CSS/JS blocks** due to match uniqueness issues. For big changes, use Python scripts or `sed` to make targeted string replacements. Always verify with `node -e "new Function(scriptContent)"` after any JS structural change.
-- `Edit` tool `old_string` must match file exactly including indentation. Use a Read first.
+- **Edit tool often fails on large CSS/JS blocks** due to match uniqueness issues. For big changes, use Python scripts or `sed` to make targeted string replacements. The repo already has `_fix_*.py` examples.
+- `Edit` tool `old_string` must match file exactly including indentation. Use `Read` first, then copy verbatim.
+- **Indentation in index.html is mixed:** some sections use 2-space indent, others use tabs. Always check with `python3 -c "print(repr(line))"` before editing.
 - Single-file means CSS selectors can conflict — use specificity carefully.
 - ASS parsing regex is fragile — unusual ASS syntax may break.
 - File System Access API requires secure context (localhost or HTTPS).
-- `_projectDirHandle` and `_librariesDirHandle` are session-scoped globals (line 3546–3547). Directory names persisted in localStorage (`st_lastFolder`, `st_librariesDir`) for display, but handles must be re-acquired on refresh.
+- `_projectDirHandle` and `_librariesDirHandle` are session-scoped globals (line 5726–5727). Directory names persisted in localStorage for display, but handles must be re-acquired on refresh.
 - Library file operations (`saveTBX`, `saveKnowledgeMD`) are async and called on every add/delete.
 - Chinese numeral sorting for episode names uses `extractNumber()`.
+- The `kuaipao-worker.js` and `kuaipao-deno.ts` files are server-side proxies and are NOT part of the single-file app — they deploy separately to Cloudflare Workers / Deno. `server.py` is a local dev alternative.
