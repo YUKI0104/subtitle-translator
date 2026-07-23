@@ -7,14 +7,11 @@
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet">
 <style>
 :root {
-  --bg: #080a1d; --surface: rgba(23,19,47,0.55); --surface2: #17132f;
-  --border: #2d2248; --text: #eeebf5; --text-dim: #8b80b3;
-  --accent: #a78bfa; --accent2: #22c55e; --success: #22c55e;
-  --danger: #ef4444; --warning: #f59e0b; --radius: 10px;
+  --radius: 10px;
   --font: -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
   --mono: 'SF Mono','Fira Code','Cascadia Code',monospace;
   --rail-w: 44px; --panel-w: 340px; --bar-height: 52px;
-  /* Hallmark-inspired tokens */
+  /* Motion tokens */
   --ease-out: cubic-bezier(0.16,1,0.3,1);
   --ease-in: cubic-bezier(0.4,0,0.68,0.06);
   --ease-in-out: cubic-bezier(0.65,0,0.35,1);
@@ -23,163 +20,143 @@
   --radius-sm: 6px; --radius-md: 10px; --radius-lg: 14px;
 }
 
-/* ═══ Theme 1: Deep Purple Luxe ═══ */
+/* ═══ Day: Warm Sand ═══ */
 :root.theme-1, .theme-1 {
-  --bg: #080a1d; --surface: rgba(23,19,47,0.55); --surface2: #17132f;
-  --border: #2d2248; --text: #eeebf5; --text-dim: #8b80b3;
-  --accent: #a78bfa; --accent-rgb: 167,139,250;
-  --header-gradient: linear-gradient(135deg,#fff 0%,#d4c5f0 100%);
-  --success: #22c55e; --danger: #ef4444; --warning: #f59e0b; --radius: 10px;
-  --body-bg: linear-gradient(145deg,#080a1d 0%,#17132f 48%,#2b1845 100%);
-  --sidebar-bg: rgba(8,10,29,0.85);
-  --cat-table-bg: rgba(8,10,29,0.85);
-  --modal-overlay: rgba(0,0,0,0.5);
-  --overlay-card: rgba(255,255,255,0.07);
-  --overlay-card-hover: rgba(255,255,255,0.12);
-  --overlay-strong: rgba(255,255,255,0.06);
-  --overlay-stronger: rgba(255,255,255,0.08);
-  --overlay-10: rgba(255,255,255,0.10);
-  --btn-hover-bg: #1e1538; --btn-hover-border: #4a3d6b;
-  --scroll-thumb: rgba(255,255,255,0.08);
-  --ep-hover-bg: rgba(167,139,250,0.12);
-  --ep-active-bg: rgba(167,139,250,0.1);
-  --ep-active-border: #a78bfa;
-  --ep-hover-full-bg: #1e1538; --ep-hover-full-border: #4a3d6b;
-  --table-hover: rgba(167,139,250,0.04);
-  --table-even: rgba(255,255,255,0.012);
-  --selection-bg: rgba(167,139,250,0.35);
-  --tag-char-bg: rgba(167,139,250,0.15);
-  --tag-char-fg: #a78bfa;
-  --status-loaded: #22c55e;
-  --status-disconnected: #475569;
-  --status-error: #ef4444;
-  --status-loading: #94a3b8;
-  --phase-bar-bg: rgba(255,255,255,0.06);
-  --dash-hover-bg: rgba(167,139,250,0.06);
-  --dash-hover-border: rgba(167,139,250,0.15);
-  --dash-bar-bg: rgba(255,255,255,0.06);
-  --lib-hover-bg: rgba(167,139,250,0.06);
-  --cat-frozen-bg: rgba(8,10,29,0.85);
-  --fx-badge-bg: var(--dash-hover-border);
-  --fx-badge-fg: #a78bfa;
-  --tag-popup-bg: rgba(167,139,250,0.2);
-  --tag-popup-fg: #a78bfa;
-  --tag-popup-hover: rgba(255,255,255,0.06);
-  --btn-success-bg: #16a34a; --btn-success-border: #22c55e;
-  --btn-success-hover-bg: #22c55e; --btn-success-hover-border: #4ade80;
-  --tag-place-bg: rgba(245,158,11,0.15); --tag-place-fg: #fbbf24;
-  --tag-object-bg: rgba(34,197,94,0.15); --tag-object-fg: #4ade80;
-  --toolbar-input-bg: rgba(255,255,255,0.06);
-  --phase-step-bg: rgba(255,255,255,0.06);
-  --phase-step-completed-bg: rgba(34,197,94,0.12);
-}
-
-/* ═══ Theme 2: Slate Blue Dark ═══ */
-:root.theme-2, .theme-2 {
-  --bg: #0f172a; --surface: rgba(30,41,59,0.5); --surface2: #1e293b;
-  --border: #334155; --text: #f1f5f9; --text-dim: #94a3b8;
-  --accent: #3b82f6; --accent-rgb: 59,130,246;
-  --header-gradient: linear-gradient(135deg,#fff 0%,#93c5fd 100%);
-  --success: #22c55e; --danger: #ef4444; --warning: #f59e0b; --radius: 12px;
-  --body-bg: var(--bg);
-  --sidebar-bg: rgba(15,23,42,0.85);
-  --cat-table-bg: rgba(15,23,42,0.85);
-  --modal-overlay: rgba(0,0,0,0.5);
-  --overlay-card: rgba(255,255,255,0.07);
-  --overlay-card-hover: rgba(255,255,255,0.12);
-  --overlay-strong: rgba(255,255,255,0.06);
-  --overlay-stronger: rgba(255,255,255,0.08);
-  --overlay-10: rgba(255,255,255,0.10);
-  --btn-hover-bg: #334155; --btn-hover-border: #64748b;
-  --scroll-thumb: rgba(255,255,255,0.08);
-  --ep-hover-bg: rgba(59,130,246,0.12);
-  --ep-active-bg: rgba(59,130,246,0.1);
-  --ep-active-border: #3b82f6;
-  --ep-hover-full-bg: #334155; --ep-hover-full-border: #64748b;
-  --table-hover: rgba(59,130,246,0.04);
-  --table-even: rgba(255,255,255,0.012);
-  --selection-bg: rgba(59,130,246,0.3);
-  --tag-char-bg: rgba(59,130,246,0.15);
-  --tag-char-fg: #60a5fa;
-  --status-loaded: #22c55e;
-  --status-disconnected: #475569;
-  --status-error: #ef4444;
-  --status-loading: #94a3b8;
-  --phase-bar-bg: rgba(255,255,255,0.06);
-  --dash-hover-bg: rgba(59,130,246,0.06);
-  --dash-hover-border: rgba(59,130,246,0.15);
-  --dash-bar-bg: rgba(255,255,255,0.06);
-  --lib-hover-bg: rgba(59,130,246,0.06);
-  --cat-frozen-bg: rgba(15,23,42,0.85);
-  --fx-badge-bg: rgba(59,130,246,0.15);
-  --fx-badge-fg: #60a5fa;
-  --tag-popup-bg: rgba(59,130,246,0.2);
-  --tag-popup-fg: #60a5fa;
-  --tag-popup-hover: rgba(255,255,255,0.06);
-  --btn-success-bg: #16a34a; --btn-success-border: #22c55e;
-  --btn-success-hover-bg: #22c55e; --btn-success-hover-border: #4ade80;
-  --tag-place-bg: rgba(245,158,11,0.15); --tag-place-fg: #fbbf24;
-  --tag-object-bg: rgba(34,197,94,0.15); --tag-object-fg: #4ade80;
-  --toolbar-input-bg: rgba(255,255,255,0.06);
-  --phase-step-bg: rgba(255,255,255,0.06);
-  --phase-step-completed-bg: rgba(34,197,94,0.12);
-}
-
-/* ═══ Theme 3: Warm Light ═══ */
-:root.theme-3, .theme-3 {
-  --bg: #f8f5f1; --surface: rgba(255,251,246,0.55); --surface2: #efe9e2;
-  --border: #dbd0c3; --text: #2c2824; --text-dim: #9a8f82;
-  --accent: #b8734a; --accent-rgb: 184,115,74;
-  --header-gradient: linear-gradient(135deg,#b8734a 0%,#d4956a 100%);
-  --success: #5a9e5e; --danger: #c46a5a; --warning: #c49a3a; --radius: 10px;
-  --body-bg: linear-gradient(145deg,#f8f5f1 0%,#eee5db 100%);
-  --sidebar-bg: rgba(248,244,239,0.88);
-  --cat-table-bg: rgba(248,244,239,0.88);
-  --modal-overlay: rgba(0,0,0,0.25);
-  --overlay-card: rgba(0,0,0,0.07);
-  --overlay-card-hover: rgba(0,0,0,0.12);
-  --overlay-strong: rgba(0,0,0,0.07);
-  --overlay-stronger: rgba(0,0,0,0.10);
-  --overlay-10: rgba(0,0,0,0.10);
-  --btn-hover-bg: #e5dbd0; --btn-hover-border: #c4b4a4;
+  --bg: #faf6f0;
+  --surface: rgba(245,239,231,0.65);
+  --surface2: #efe8de;
+  --border: #e0d4c8;
+  --text: #2a241e;
+  --text-dim: #a6998b;
+  --accent: #c97d4f;
+  --accent-rgb: 201,125,79;
+  --accent2: #6d9b6d;
+  --success: #5a9e5e;
+  --danger: #c46a5a;
+  --warning: #c49a3a;
+  --header-gradient: linear-gradient(135deg,#c97d4f 0%,#dba070 100%);
+  --body-bg: linear-gradient(160deg,#faf6f0 0%,#f5ede4 100%);
+  --sidebar-bg: rgba(248,244,239,0.90);
+  --cat-table-bg: rgba(248,244,239,0.85);
+  --modal-overlay: rgba(0,0,0,0.2);
+  --overlay-card: rgba(0,0,0,0.05);
+  --overlay-card-hover: rgba(0,0,0,0.10);
+  --overlay-strong: rgba(0,0,0,0.05);
+  --overlay-stronger: rgba(0,0,0,0.08);
+  --overlay-10: rgba(0,0,0,0.08);
+  --btn-hover-bg: #e6dbcf;
+  --btn-hover-border: #cdbcab;
+  --btn-primary-bg: #c97d4f;
+  --btn-primary-border: #d48c5c;
+  --btn-primary-hover-bg: #d48c5c;
+  --btn-primary-hover-border: #dba070;
   --scroll-thumb: rgba(0,0,0,0.08);
-  --ep-hover-bg: rgba(184,115,74,0.10);
-  --ep-active-bg: rgba(184,115,74,0.08);
-  --ep-active-border: #b8734a;
-  --ep-hover-full-bg: #e5dbd0; --ep-hover-full-border: #c4b4a4;
-  --table-hover: rgba(184,115,74,0.04);
+  --ep-hover-bg: rgba(201,125,79,0.10);
+  --ep-active-bg: rgba(201,125,79,0.08);
+  --ep-active-border: #c97d4f;
+  --ep-hover-full-bg: #e6dbcf;
+  --ep-hover-full-border: #cdbcab;
+  --table-hover: rgba(201,125,79,0.04);
   --table-even: rgba(0,0,0,0.012);
-  --selection-bg: rgba(184,115,74,0.20);
-  --tag-char-bg: rgba(184,115,74,0.12);
-  --tag-char-fg: #b8734a;
+  --selection-bg: rgba(201,125,79,0.20);
+  --tag-char-bg: rgba(201,125,79,0.12);
+  --tag-char-fg: #c97d4f;
   --status-loaded: #5a9e5e;
-  --status-disconnected: #b8ada0;
+  --status-disconnected: #cdbcab;
   --status-error: #c46a5a;
   --status-loading: #c4b4a4;
-  --phase-bar-bg: rgba(0,0,0,0.06);
-  --dash-hover-bg: rgba(184,115,74,0.06);
-  --dash-hover-border: rgba(184,115,74,0.15);
-  --dash-bar-bg: rgba(0,0,0,0.06);
-  --lib-hover-bg: rgba(184,115,74,0.06);
+  --phase-bar-bg: rgba(0,0,0,0.05);
+  --dash-hover-bg: rgba(201,125,79,0.06);
+  --dash-hover-border: rgba(201,125,79,0.15);
+  --dash-bar-bg: rgba(0,0,0,0.05);
+  --lib-hover-bg: rgba(201,125,79,0.06);
   --cat-frozen-bg: rgba(248,244,239,0.85);
-  --fx-badge-bg: rgba(184,115,74,0.12);
-  --fx-badge-fg: #b8734a;
-  --tag-popup-bg: rgba(184,115,74,0.15);
-  --tag-popup-fg: #b8734a;
-  --tag-popup-hover: rgba(0,0,0,0.06);
-  --btn-success-bg: #b8734a; --btn-success-border: #c4845a;
-  --btn-success-hover-bg: #c4845a; --btn-success-hover-border: #d4956a;
-  --tag-place-bg: rgba(196,154,58,0.20); --tag-place-fg: #c49a3a;
-  --tag-object-bg: rgba(90,158,94,0.20); --tag-object-fg: #5a9e5e;
-  --toolbar-input-bg: rgba(0,0,0,0.04);
+  --fx-badge-bg: rgba(201,125,79,0.12);
+  --fx-badge-fg: #c97d4f;
+  --tag-popup-bg: rgba(201,125,79,0.15);
+  --tag-popup-fg: #c97d4f;
+  --tag-popup-hover: rgba(0,0,0,0.05);
+  --btn-success-bg: #5a9e5e;
+  --btn-success-border: #6dab6d;
+  --btn-success-hover-bg: #6dab6d;
+  --btn-success-hover-border: #7dc07d;
+  --tag-place-bg: rgba(196,154,58,0.18);
+  --tag-place-fg: #b88930;
+  --tag-object-bg: rgba(90,158,94,0.18);
+  --tag-object-fg: #4d8a4d;
+  --toolbar-input-bg: rgba(0,0,0,0.03);
   --phase-step-bg: rgba(0,0,0,0.04);
-  --phase-step-completed-bg: rgba(90,158,94,0.15);
+  --phase-step-completed-bg: rgba(90,158,94,0.12);
 }
 
-/* Default to theme-1 */
-:root { --btn-primary-bg: #7c3aed; --btn-primary-border: #a78bfa; --btn-primary-hover-bg: #8b5cf6; --btn-primary-hover-border: #c4b5fd; }
-:root.theme-2 { --btn-primary-bg: #2563eb; --btn-primary-border: #3b82f6; --btn-primary-hover-bg: #3b82f6; --btn-primary-hover-border: #60a5fa; }
-:root.theme-3 { --btn-primary-bg: #b8734a; --btn-primary-border: #c4845a; --btn-primary-hover-bg: #c4845a; --btn-primary-hover-border: #d4956a; }
+/* ═══ Night: Deep Amber ═══ */
+:root.theme-2, .theme-2 {
+  --bg: #161210;
+  --surface: rgba(36,30,26,0.60);
+  --surface2: #241e1a;
+  --border: #352d27;
+  --text: #e8e0d8;
+  --text-dim: #8a7e74;
+  --accent: #d48c5c;
+  --accent-rgb: 212,140,92;
+  --accent2: #7aaa7a;
+  --success: #5a9e5e;
+  --danger: #e06a5a;
+  --warning: #d4a43a;
+  --header-gradient: linear-gradient(135deg,#f0e0d0 0%,#d48c5c 100%);
+  --body-bg: linear-gradient(160deg,#161210 0%,#1f1a16 50%,#2a221c 100%);
+  --sidebar-bg: rgba(22,18,16,0.88);
+  --cat-table-bg: rgba(22,18,16,0.85);
+  --modal-overlay: rgba(0,0,0,0.55);
+  --overlay-card: rgba(255,255,255,0.07);
+  --overlay-card-hover: rgba(255,255,255,0.12);
+  --overlay-strong: rgba(255,255,255,0.06);
+  --overlay-stronger: rgba(255,255,255,0.08);
+  --overlay-10: rgba(255,255,255,0.10);
+  --btn-hover-bg: #2e2620;
+  --btn-hover-border: #4d3f35;
+  --btn-primary-bg: #c97d4f;
+  --btn-primary-border: #d48c5c;
+  --btn-primary-hover-bg: #d48c5c;
+  --btn-primary-hover-border: #dba070;
+  --scroll-thumb: rgba(255,255,255,0.08);
+  --ep-hover-bg: rgba(212,140,92,0.12);
+  --ep-active-bg: rgba(212,140,92,0.10);
+  --ep-active-border: #d48c5c;
+  --ep-hover-full-bg: #2e2620;
+  --ep-hover-full-border: #4d3f35;
+  --table-hover: rgba(212,140,92,0.05);
+  --table-even: rgba(255,255,255,0.012);
+  --selection-bg: rgba(212,140,92,0.30);
+  --tag-char-bg: rgba(212,140,92,0.15);
+  --tag-char-fg: #d48c5c;
+  --status-loaded: #5a9e5e;
+  --status-disconnected: #4d3f35;
+  --status-error: #e06a5a;
+  --status-loading: #8a7e74;
+  --phase-bar-bg: rgba(255,255,255,0.06);
+  --dash-hover-bg: rgba(212,140,92,0.07);
+  --dash-hover-border: rgba(212,140,92,0.18);
+  --dash-bar-bg: rgba(255,255,255,0.06);
+  --lib-hover-bg: rgba(212,140,92,0.07);
+  --cat-frozen-bg: rgba(22,18,16,0.85);
+  --fx-badge-bg: rgba(212,140,92,0.18);
+  --fx-badge-fg: #d48c5c;
+  --tag-popup-bg: rgba(212,140,92,0.22);
+  --tag-popup-fg: #d48c5c;
+  --tag-popup-hover: rgba(255,255,255,0.06);
+  --btn-success-bg: #4d8a4d;
+  --btn-success-border: #5a9e5e;
+  --btn-success-hover-bg: #5a9e5e;
+  --btn-success-hover-border: #6dab6d;
+  --tag-place-bg: rgba(212,164,58,0.20);
+  --tag-place-fg: #d4a43a;
+  --tag-object-bg: rgba(90,158,94,0.20);
+  --tag-object-fg: #6dab6d;
+  --toolbar-input-bg: rgba(255,255,255,0.05);
+  --phase-step-bg: rgba(255,255,255,0.06);
+  --phase-step-completed-bg: rgba(90,158,94,0.15);
+}
 * { margin:0; padding:0; box-sizing:border-box; }
 html,body { height:100%; overflow:hidden; }
 body {
@@ -876,9 +853,8 @@ header h1 .tag {
       <div class="ssec-title">🎨 主题</div>
       <div class="ssec-body">
         <select id="themeSelector" onchange="switchTheme(parseInt(this.value))" style="width:100%;padding:6px 10px;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:var(--fs,13px);outline:none;cursor:pointer;font-family:var(--font)">
-          <option value="1">🌙 深紫主题</option>
-          <option value="2">🌑 深蓝主题</option>
-          <option value="3">☀️ 暖白主题</option>
+          <option value="1">☀️ 暖沙日间</option>
+          <option value="2">🌙 琥珀夜间</option>
         </select>
       </div>
     </div>
@@ -1537,7 +1513,7 @@ function _cleanInvisibleChars(obj) {
 
 function initDefault() {
   // Apply saved theme
-  var savedTheme = localStorage.getItem('st_theme') || '3';
+  var savedTheme = localStorage.getItem('st_theme') || '1';
   document.documentElement.classList.add('theme-' + savedTheme);
   const saved = localStorage.getItem('st_state');
   if (saved) {
@@ -2512,7 +2488,7 @@ async function openLibraryModal(tab) {
 
 function switchTheme(n) {
   var cur = document.documentElement;
-  cur.classList.remove('theme-1','theme-2','theme-3');
+  cur.classList.remove('theme-1','theme-2');
   cur.classList.add('theme-' + n);
   localStorage.setItem('st_theme', String(n));
   var sel = document.getElementById('themeSelector');
@@ -8117,7 +8093,7 @@ function confirmExport() {
 // ═══════════════════════════════════════════
 
 function loadSettings() {
-  var curTheme = localStorage.getItem('st_theme') || '3';
+  var curTheme = localStorage.getItem('st_theme') || '1';
   var sel = document.getElementById('themeSelector');
   if (sel) sel.value = curTheme;
   var el = document.getElementById('fontSize');
