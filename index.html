@@ -5715,6 +5715,20 @@ const PRESET_PROVIDERS = {
     balanceEndpoint: 'https://openrouter.ai/api/v1/auth/key',
     pricing: { inputPerM: 2.5, outputPerM: 10, currency: '$', url: 'https://openrouter.ai/models' },
   },
+  kuaipao: {
+    id: 'kuaipao', name: '快跑 (kuaipao.pro)',
+    endpoint: 'https://kuaipao.pro/v1/chat/completions',
+    models: [
+      { id: 'claude-sonnet-5', name: 'Claude Sonnet 5', inputPerM: 0, outputPerM: 0 },
+      { id: 'claude-fable-5', name: 'Claude Fable 5', inputPerM: 0, outputPerM: 0 },
+      { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro', inputPerM: 0, outputPerM: 0 },
+      { id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash', inputPerM: 0, outputPerM: 0 },
+      { id: 'deepseek-v4-pro', name: 'DeepSeek V4 Pro (dspro)', inputPerM: 0, outputPerM: 0 },
+    ],
+    apiKeyHelp: '<a href="https://kuaipao.pro" target="_blank">kuaipao.pro</a> 获取 Key',
+    helpBalance: '即用即付',
+    pricing: { inputPerM: 0, outputPerM: 0, currency: '¥', url: '' },
+  },
 };
 
 // ═══════════════════════════════════════════
