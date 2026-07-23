@@ -6409,7 +6409,7 @@ function openPlatformEditModal(id) {
 	      const sel = m.id === curModel;
 	      const freeTag = m.free ? '<span style="color:var(--success);font-size:10px">免费</span>' : '';
 	      const priceStr = m.free ? '免费' : sym + m.inputPerM + '/' + sym + m.outputPerM + '/M';
-	      html += '<div class="model-opt" onclick="selectEditModel('' + m.id + '')" data-model="' + m.id + '" style="cursor:pointer;padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;' +
+	      html += '<div class="model-opt" onclick="selectEditModel(\x27' + m.id + '\x27)" data-model="' + m.id + '" style="cursor:pointer;padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;' +
 	        (sel ? 'color:#fff;background:var(--accent);border:1px solid var(--accent)' : 'border:1px solid var(--border)') + '">' +
 	        '<span>' + escHtml(m.name) + ' ' + freeTag + '</span>' +
 	        '<span style="color:' + (sel ? '#fff' : 'var(--text-dim)') + ';font-size:11px;font-family:var(--mono)">' + priceStr + '</span>' +
@@ -6422,7 +6422,7 @@ function openPlatformEditModal(id) {
 	    '<div style="font-size:13px;color:var(--text-dim);margin-bottom:4px">' + (hasModels ? '或输入自定义模型 ID' : '模型 ID') + '</div>' +
 	    '<div style="display:flex;gap:8px">' +
 	      '<input type="text" id="editModelInput" value="' + escHtml(hasModels ? '' : (curModel || '')) + '" placeholder="如 claude-sonnet-5 / deepseek-v4-pro" style="flex:1;padding:7px 8px;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;font-family:var(--mono)">' +
-	      '<button onclick="fetchCustomModels('' + id + '')" style="cursor:pointer;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-size:11px;font-family:var(--font);white-space:nowrap">拉取列表</button>' +
+	      '<button onclick="fetchCustomModels(\x27' + id + '\x27)" style="cursor:pointer;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-size:11px;font-family:var(--font);white-space:nowrap">拉取列表</button>' +
 	    '</div>' +
 	    '<div id="fetchedModelsWrap" style="margin-top:6px;display:none">' +
 	      '<div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">点击选择模型：</div>' +
