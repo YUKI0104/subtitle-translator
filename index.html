@@ -22,12 +22,12 @@
 
 /* ═══ Day: Warm Sand ═══ */
 :root.theme-1, .theme-1 {
-  --bg: #faf6f0;
-  --surface: rgba(245,239,231,0.65);
-  --surface2: #efe8de;
-  --border: #e0d4c8;
+  --bg: #e8d9c8;
+  --surface: rgba(232,217,200,0.70);
+  --surface2: #dcccbb;
+  --border: #cbb7a2;
   --text: #2a241e;
-  --text-dim: #a6998b;
+  --text-dim: #9a8a7a;
   --accent: #c97d4f;
   --accent-rgb: 201,125,79;
   --accent2: #6d9b6d;
@@ -35,17 +35,17 @@
   --danger: #c46a5a;
   --warning: #c49a3a;
   --header-gradient: linear-gradient(135deg,#c97d4f 0%,#dba070 100%);
-  --body-bg: linear-gradient(160deg,#faf6f0 0%,#f5ede4 100%);
-  --sidebar-bg: rgba(248,244,239,0.90);
-  --cat-table-bg: rgba(248,244,239,0.85);
+  --body-bg: linear-gradient(160deg,#e8d9c8 0%,#e2cfba 100%);
+  --sidebar-bg: rgba(232,217,200,0.92);
+  --cat-table-bg: rgba(232,217,200,0.88);
   --modal-overlay: rgba(0,0,0,0.2);
   --overlay-card: rgba(0,0,0,0.05);
   --overlay-card-hover: rgba(0,0,0,0.10);
   --overlay-strong: rgba(0,0,0,0.05);
   --overlay-stronger: rgba(0,0,0,0.08);
   --overlay-10: rgba(0,0,0,0.08);
-  --btn-hover-bg: #e6dbcf;
-  --btn-hover-border: #cdbcab;
+  --btn-hover-bg: #cebdab;
+  --btn-hover-border: #bca896;
   --btn-primary-bg: #c97d4f;
   --btn-primary-border: #d48c5c;
   --btn-primary-hover-bg: #d48c5c;
@@ -54,28 +54,28 @@
   --ep-hover-bg: rgba(201,125,79,0.10);
   --ep-active-bg: rgba(201,125,79,0.08);
   --ep-active-border: #c97d4f;
-  --ep-hover-full-bg: #e6dbcf;
-  --ep-hover-full-border: #cdbcab;
+  --ep-hover-full-bg: #cebdab;
+  --ep-hover-full-border: #bca896;
   --table-hover: rgba(201,125,79,0.04);
   --table-even: rgba(0,0,0,0.012);
   --selection-bg: rgba(201,125,79,0.20);
   --tag-char-bg: rgba(201,125,79,0.12);
   --tag-char-fg: #c97d4f;
   --status-loaded: #5a9e5e;
-  --status-disconnected: #cdbcab;
+  --status-disconnected: #bca896;
   --status-error: #c46a5a;
-  --status-loading: #c4b4a4;
+  --status-loading: #b8a694;
   --phase-bar-bg: rgba(0,0,0,0.05);
   --dash-hover-bg: rgba(201,125,79,0.06);
   --dash-hover-border: rgba(201,125,79,0.15);
   --dash-bar-bg: rgba(0,0,0,0.05);
   --lib-hover-bg: rgba(201,125,79,0.06);
-  --cat-frozen-bg: rgba(248,244,239,0.85);
+  --cat-frozen-bg: rgba(232,217,200,0.85);
   --fx-badge-bg: rgba(201,125,79,0.12);
   --fx-badge-fg: #c97d4f;
   --tag-popup-bg: rgba(201,125,79,0.15);
   --tag-popup-fg: #c97d4f;
-  --tag-popup-hover: rgba(0,0,0,0.05);
+  --tag-popup-hover: rgba(0,0,0,0.04);
   --btn-success-bg: #5a9e5e;
   --btn-success-border: #6dab6d;
   --btn-success-hover-bg: #6dab6d;
@@ -160,7 +160,7 @@
 * { margin:0; padding:0; box-sizing:border-box; }
 html,body { height:100%; overflow:hidden; }
 body {
-  font-family: var(--font); background: var(--body-bg); color: var(--text);
+  font-family: var(--font); background: var(--body-bg); background-color: var(--bg); color: var(--text);
   display: flex; flex-direction: column; user-select: none; font-size:var(--fs,16px);
 }
 header {
