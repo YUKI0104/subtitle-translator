@@ -5055,29 +5055,33 @@ async function openProjectFromFolder() {
   const content = await file.text();
   let data;
   try { data = JSON.parse(content); } catch(e) { toast('project.json 格式错误', 'error'); return; }
-  // Restore project
-  const proj = activeProject();
-  proj.name = data.name || dirHandle.name;
-  proj.sourceLang = data.sourceLang || 'auto';
-  proj.targetLang = data.targetLang || 'Simplified Chinese';
-  proj.episodes = data.episodes || [];
-  // Sort episodes by natural order
-  proj.episodes.sort((a, b) => {
-    const na = extractNumber(a.name), nb = extractNumber(b.name);
-    if (na !== null && nb !== null && na !== nb) return na - nb;
-    return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
-  });
-  proj.glossary = data.glossary || [];
-  // Libraries are loaded from TBX/MD files when configured
-  proj.memoryBank = data.memoryBank || [];
-  proj.knowledgeBase = data.knowledgeBase || [];
-  if (data.phase) state.phase = data.phase;
-  state.activeEpisodeIdx = data.activeEpisodeIdx ?? 0;
-  state.currentSubIdx = -1;
-  _projectDirHandle = dirHandle;
-  localStorage.setItem('st_lastFolder', dirHandle.name);
-  markDirty();
-  renderAll();
+  	  // Restore project — create a NEW project entry, don't overwrite current one
+	  const proj = {
+	    id: 'proj_'+Date.now(), name: data.name || dirHandle.name,
+	    sourceLang: data.sourceLang || 'auto',
+	    targetLang: data.targetLang || 'Simplified Chinese',
+	    episodes: data.episodes || [],
+	    glossary: data.glossary || [],
+	    memoryBank: data.memoryBank || [],
+	    knowledgeBase: data.knowledgeBase || [],
+	    client: '', unitPrice: 0, deliveryDate: '', workStartTime: Date.now(),
+	    createdAt: Date.now(),
+	  };
+	  // Sort episodes by natural order
+	  proj.episodes.sort((a, b) => {
+	    const na = extractNumber(a.name), nb = extractNumber(b.name);
+	    if (na !== null && nb !== null && na !== nb) return na - nb;
+	    return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+	  });
+	  state.projects.push(proj);
+	  state.activeProjectIdx = state.projects.length - 1;
+	  if (data.phase) state.phase = data.phase;
+	  state.activeEpisodeIdx = data.activeEpisodeIdx ?? 0;
+	  state.currentSubIdx = -1;
+	  _projectDirHandle = dirHandle;
+	  localStorage.setItem('st_lastFolder', dirHandle.name);
+	  markDirty();
+	  renderAll();
   // Load first episode's video
   const firstEp = proj.episodes[state.activeEpisodeIdx];
   if (firstEp && firstEp.videoFile) {
