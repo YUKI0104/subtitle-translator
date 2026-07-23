@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+"""
+Extract full style data by slug and format it for AI-driven generation.
+Outputs JSON with design tokens, philosophy, do/don't lists, aiRules, and component templates.
+Uses bundled style-prompts.txt data — no external dependencies.
+"""
+
+import json
+import sys
+from pathlib import Path
+
+DATA_PATH = Path(__file__).parent.parent / "references" / "style-prompts.txt"
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: fetch_style.py <slug>", file=sys.stderr)
+        sys.exit(1)
+
+    slug = sys.argv[1].lower().strip()
+
+    if not DATA_PATH.exists():
+        print(json.dumps({"error": "StyleKit data not found"}, ensure_ascii=False))
+        sys.exit(1)
+
+    with open(DATA_PATH, encoding="utf-8") as f:
+        data = json.load(f)
+
+    for s in data["styles"]:
+        if s["slug"] == slug:
+            result = {
+                "slug": s["slug"],
+                "name": s["name"],
+                "nameEn": s.get("nameEn", ""),
+                "category": s.get("category", ""),
+                "tags": s.get("tags", []),
+                "keywords": s.get("keywords", []),
+                "colors": s.get("colors", {}),
+                "philosophy": s.get("philosophy", ""),
+                "doList": s.get("doList", []),
+                "dontList": s.get("dontList", []),
+                "aiRules": s.get("aiRules", ""),
+                "components": s.get("components", {}),
+                "examplePrompts": s.get("examplePrompts", []),
+            }
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            return
+
+    print(json.dumps({"error": f"Style not found: {slug}"}, ensure_ascii=False))
+    sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

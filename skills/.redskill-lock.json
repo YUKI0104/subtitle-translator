@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "skills": {
+    "stylekit-generator": {
+      "name": "stylekit-generator",
+      "version": "1.0.0",
+      "source": "redskill",
+      "install_dir": "/Users/yuki/subtitle-translator/skills/stylekit-generator",
+      "installed_at": "1784462183620",
+      "sha256": "d4b34c96acc1194ce87cf6b8ec536d2ceb3ee2dee807f9c04464032d3bd936be"
+    }
+  }
+}

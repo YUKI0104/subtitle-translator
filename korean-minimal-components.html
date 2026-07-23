@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Korean Minimal — Component Showcase</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500&display=swap');
+  * { font-family: 'Noto Sans KR', 'Pretendard', sans-serif; }
+  body { background: #f5f3ef; display: flex; justify-content: center; padding: 24px; }
+  .container {
+    width: 750px;
+    min-height: 1000px;
+    background: #faf9f7;
+    border-radius: 24px;
+    border: 1px solid rgba(61,74,92,0.08);
+    box-shadow: 0 8px 32px rgba(232,212,184,0.12);
+    padding: 48px 40px;
+    margin: 0 auto;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  }
+  .section-label {
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    color: rgba(61,74,92,0.3);
+    margin-bottom: 20px;
+  }
+  .divider {
+    height: 1px;
+    background: rgba(61,74,92,0.08);
+    margin: 40px 0;
+  }
+  .pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.03em;
+  }
+  /* Toggle */
+  .toggle-track {
+    width: 44px; height: 24px;
+    border-radius: 999px;
+    background: rgba(61,74,92,0.12);
+    position: relative;
+    cursor: pointer;
+    transition: background 0.7s ease-in-out;
+  }
+  .toggle-track.on { background: #d4a5a5; }
+  .toggle-thumb {
+    width: 18px; height: 18px;
+    border-radius: 999px;
+    background: #faf9f7;
+    position: absolute;
+    top: 3px; left: 3px;
+    transition: transform 0.7s ease-in-out;
+    box-shadow: 0 1px 4px rgba(61,74,92,0.08);
+  }
+  .toggle-track.on .toggle-thumb { transform: translateX(20px); }
+  /* Progress circle */
+  .progress-ring { transform: rotate(-90deg); }
+  .progress-ring-circle {
+    fill: none;
+    stroke-width: 4;
+    stroke-linecap: round;
+  }
+  /* Accordion */
+  .accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.7s ease-in-out;
+  }
+  .accordion-content.open { max-height: 200px; }
+  .chevron { transition: transform 0.7s ease-in-out; }
+  .chevron.open { transform: rotate(180deg); }
+  /* Tabs */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  /* Focus */
+  *:focus-visible {
+    outline: 2px solid rgba(212,165,165,0.4);
+    outline-offset: 2px;
+    border-radius: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-10">
+    <div>
+      <h1 class="text-2xl font-light text-[#3d4a5c] tracking-wide">Korean Minimal</h1>
+      <span class="pill bg-[#a8c5b8]/15 text-[#3d4a5c]/50 mt-2 inline-block">minimal · modern</span>
+    </div>
+    <div class="w-8 h-px bg-[#d4a5a5]/60"></div>
+  </div>
+
+  <!-- SECTION 1: Buttons -->
+  <div>
+    <div class="section-label">BUTTONS</div>
+    <div class="flex flex-wrap gap-4">
+      <!-- Primary -->
+      <button class="px-10 py-3.5 bg-[#3d4a5c] text-[#faf9f7] font-light tracking-wide rounded-2xl border border-[#3d4a5c]/10 shadow-sm hover:shadow-md hover:bg-[#3d4a5c]/90 active:bg-[#2f3946] transition-all duration-700 ease-in-out focus-visible:outline-2 focus-visible:outline-[#d4a5a5]/40">
+        Primary
+      </button>
+      <!-- Secondary -->
+      <button class="px-10 py-3.5 bg-[#faf9f7] text-[#3d4a5c] font-light tracking-wide rounded-2xl border border-[#3d4a5c]/10 shadow-[0_4px_15px_rgba(232,212,184,0.18)] hover:-translate-y-0.5 hover:text-[#2f3946] hover:shadow-[0_16px_36px_rgba(168,197,184,0.18)] active:bg-[#f3f0ea] transition-all duration-700 ease-in-out">
+        Secondary
+      </button>
+      <!-- Outline -->
+      <button class="px-10 py-3.5 bg-transparent text-[#3d4a5c] font-light tracking-wide rounded-2xl border border-[#3d4a5c]/20 hover:bg-[#3d4a5c]/5 active:bg-[#3d4a5c]/10 transition-all duration-700 ease-in-out">
+        Outline
+      </button>
+      <!-- Ghost -->
+      <button class="px-10 py-3.5 bg-transparent text-[#3d4a5c]/60 font-light tracking-wide rounded-2xl hover:bg-[#3d4a5c]/5 active:bg-[#3d4a5c]/10 transition-all duration-700 ease-in-out">
+        Ghost
+      </button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 2: Form Elements -->
+  <div>
+    <div class="section-label">FORM ELEMENTS</div>
+    <div class="flex items-start gap-10 flex-wrap">
+      <!-- Input -->
+      <div class="relative flex-1 min-w-[200px]">
+        <svg class="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4" viewBox="0 0 16 16" fill="none">
+          <circle cx="6.5" cy="6.5" r="4.5" stroke="rgba(61,74,92,0.25)" stroke-width="1.2"/>
+          <line x1="9.8" y1="9.8" x2="14" y2="14" stroke="rgba(61,74,92,0.25)" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+        <input type="text" placeholder="Search..." class="w-full pl-12 pr-5 py-3.5 bg-[#faf9f7] border border-[#3d4a5c]/10 rounded-2xl text-[#3d4a5c] placeholder-[#3d4a5c]/25 font-light tracking-wide focus:border-[#d4a5a5]/50 focus:shadow-[0_0_0_3px_rgba(212,165,165,0.1)] focus:outline-none transition-all duration-300"/>
+      </div>
+      <!-- Toggle -->
+      <div class="flex items-center gap-4 pt-2">
+        <span class="text-sm font-light text-[#3d4a5c]/40 tracking-wide">Toggle</span>
+        <div class="toggle-track on" role="switch" aria-checked="true" tabindex="0" onclick="this.classList.toggle('on');this.setAttribute('aria-checked',this.classList.contains('on'))">
+          <div class="toggle-thumb"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 3: Content Components -->
+  <div>
+    <div class="section-label">CONTENT COMPONENTS</div>
+    <div class="flex gap-6 flex-wrap">
+      <!-- Card -->
+      <div class="flex-1 min-w-[240px] p-10 bg-[#faf9f7] rounded-2xl border border-[#3d4a5c]/10 shadow-[0_8px_24px_rgba(232,212,184,0.14)] hover:-translate-y-0.5 hover:shadow-[0_24px_50px_rgba(212,165,165,0.16)] transition-all duration-1000 ease-in-out group">
+        <div class="w-8 h-px bg-[#d4a5a5]/80 mb-6"></div>
+        <h3 class="text-xl font-light text-[#3d4a5c] mb-4 tracking-wide group-hover:text-[#2f3946] transition-colors duration-700">Gentle Touch</h3>
+        <p class="text-sm text-[#3d4a5c]/55 leading-relaxed group-hover:text-[#3d4a5c]/70 transition-colors duration-700">A slow and delicate interface rhythm, where warmth appears in quiet gradients.</p>
+      </div>
+      <!-- Badges -->
+      <div class="flex-1 min-w-[160px]">
+        <div class="flex flex-wrap gap-3 mt-2">
+          <span class="pill bg-[#3d4a5c]/8 text-[#3d4a5c]/60">Default</span>
+          <span class="pill bg-[#a8c5b8]/20 text-[#3d4a5c]/60">Success</span>
+          <span class="pill bg-[#e8d4b8]/25 text-[#3d4a5c]/60">Warning</span>
+          <span class="pill bg-[#d4a5a5]/20 text-[#3d4a5c]/60">Danger</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 4: Progress -->
+  <div>
+    <div class="section-label">PROGRESS</div>
+    <div class="flex items-center gap-10 flex-wrap">
+      <!-- Circle -->
+      <div class="relative w-20 h-20">
+        <svg class="progress-ring w-20 h-20" viewBox="0 0 72 72">
+          <circle class="progress-ring-circle" stroke="rgba(61,74,92,0.08)" cx="36" cy="36" r="30"/>
+          <circle class="progress-ring-circle progress-ring-fill" stroke="#3d4a5c" cx="36" cy="36" r="30" stroke-dasharray="188.5" stroke-dashoffset="52.8"/>
+        </svg>
+        <span class="absolute inset-0 flex items-center justify-center text-sm font-light text-[#3d4a5c] tracking-wide">72%</span>
+      </div>
+      <!-- Bar -->
+      <div class="flex-1 min-w-[200px]">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-light text-[#3d4a5c]/40 tracking-wide">Progress</span>
+          <span class="text-xs font-light text-[#3d4a5c]/40 tracking-wide">65%</span>
+        </div>
+        <div class="w-full h-1.5 bg-[#3d4a5c]/8 rounded-full overflow-hidden">
+          <div class="h-full bg-[#3d4a5c] rounded-full transition-all duration-1000 ease-in-out" style="width:65%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 5: Navigation -->
+  <div>
+    <div class="section-label">NAVIGATION</div>
+    <!-- Tabs -->
+    <div class="mb-6">
+      <div class="flex gap-6 border-b border-[#3d4a5c]/8 pb-3" role="tablist">
+        <button class="tab-btn text-sm font-light tracking-wide text-[#3d4a5c] pb-3 -mb-3 border-b border-[#3d4a5c] transition-all duration-700" data-tab="overview" role="tab" aria-selected="true">Overview</button>
+        <button class="tab-btn text-sm font-light tracking-wide text-[#3d4a5c]/30 pb-3 -mb-3 border-b border-transparent hover:text-[#3d4a5c]/50 transition-all duration-700" data-tab="analytics" role="tab" aria-selected="false">Analytics</button>
+        <button class="tab-btn text-sm font-light tracking-wide text-[#3d4a5c]/30 pb-3 -mb-3 border-b border-transparent hover:text-[#3d4a5c]/50 transition-all duration-700" data-tab="settings" role="tab" aria-selected="false">Settings</button>
+      </div>
+      <div id="tab-overview" class="tab-content active mt-5"><p class="text-sm text-[#3d4a5c]/50 font-light leading-relaxed">Overview panel with summary metrics and recent activity.</p></div>
+      <div id="tab-analytics" class="tab-content mt-5"><p class="text-sm text-[#3d4a5c]/50 font-light leading-relaxed">Analytics dashboard showing trends and insights over time.</p></div>
+      <div id="tab-settings" class="tab-content mt-5"><p class="text-sm text-[#3d4a5c]/50 font-light leading-relaxed">Configure your preferences and application settings.</p></div>
+    </div>
+    <!-- Nav Bar -->
+    <div class="flex items-center justify-between px-6 py-4 bg-[#faf9f7] rounded-2xl border border-[#3d4a5c]/8">
+      <div class="flex items-center gap-2">
+        <div class="w-2 h-2 rounded-full bg-[#3d4a5c]/20"></div>
+        <span class="text-sm font-light text-[#3d4a5c] tracking-wide">Brand</span>
+      </div>
+      <div class="flex items-center gap-6">
+        <a href="#" class="text-xs font-light text-[#3d4a5c]/40 tracking-wide hover:text-[#3d4a5c]/60 transition-colors duration-500">Home</a>
+        <a href="#" class="text-xs font-light text-[#3d4a5c]/40 tracking-wide hover:text-[#3d4a5c]/60 transition-colors duration-500">About</a>
+        <a href="#" class="text-xs font-light text-[#3d4a5c]/40 tracking-wide hover:text-[#3d4a5c]/60 transition-colors duration-500">Contact</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 6: Color Palette -->
+  <div>
+    <div class="section-label">COLOR PALETTE</div>
+    <div class="flex gap-3">
+      <div class="flex-1 text-center">
+        <div class="w-full aspect-square rounded-2xl bg-[#3d4a5c] mb-2 border border-[#3d4a5c]/5"></div>
+        <span class="text-[10px] font-light text-[#3d4a5c]/40 tracking-wide">#3d4a5c</span>
+      </div>
+      <div class="flex-1 text-center">
+        <div class="w-full aspect-square rounded-2xl bg-[#faf9f7] mb-2 border border-[#3d4a5c]/8"></div>
+        <span class="text-[10px] font-light text-[#3d4a5c]/40 tracking-wide">#faf9f7</span>
+      </div>
+      <div class="flex-1 text-center">
+        <div class="w-full aspect-square rounded-2xl bg-[#d4a5a5] mb-2 border border-[#3d4a5c]/5"></div>
+        <span class="text-[10px] font-light text-[#3d4a5c]/40 tracking-wide">#d4a5a5</span>
+      </div>
+      <div class="flex-1 text-center">
+        <div class="w-full aspect-square rounded-2xl bg-[#a8c5b8] mb-2 border border-[#3d4a5c]/5"></div>
+        <span class="text-[10px] font-light text-[#3d4a5c]/40 tracking-wide">#a8c5b8</span>
+      </div>
+      <div class="flex-1 text-center">
+        <div class="w-full aspect-square rounded-2xl bg-[#e8d4b8] mb-2 border border-[#3d4a5c]/5"></div>
+        <span class="text-[10px] font-light text-[#3d4a5c]/40 tracking-wide">#e8d4b8</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 7: Accordion -->
+  <div>
+    <div class="section-label">ACCORDION</div>
+    <div class="space-y-2">
+      <div class="rounded-2xl border border-[#3d4a5c]/8 overflow-hidden">
+        <button class="accordion-btn w-full flex items-center justify-between px-6 py-4 text-left text-sm font-light text-[#3d4a5c] tracking-wide hover:bg-[#3d4a5c]/3 transition-colors duration-500" aria-expanded="true">
+          Getting Started
+          <svg class="chevron open w-3.5 h-3.5 text-[#3d4a5c]/30" viewBox="0 0 14 8" fill="none"><path d="M1 1l6 6 6-6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="accordion-content open px-6 pb-4">
+          <p class="text-xs text-[#3d4a5c]/45 font-light leading-relaxed">Begin your journey with Korean Minimal. The gentle interface guides you through each step with soft transitions and deliberate whitespace.</p>
+        </div>
+      </div>
+      <div class="rounded-2xl border border-[#3d4a5c]/8 overflow-hidden">
+        <button class="accordion-btn w-full flex items-center justify-between px-6 py-4 text-left text-sm font-light text-[#3d4a5c] tracking-wide hover:bg-[#3d4a5c]/3 transition-colors duration-500" aria-expanded="false">
+          Configuration
+          <svg class="chevron w-3.5 h-3.5 text-[#3d4a5c]/30" viewBox="0 0 14 8" fill="none"><path d="M1 1l6 6 6-6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="accordion-content px-6 pb-4">
+          <p class="text-xs text-[#3d4a5c]/45 font-light leading-relaxed">Adjust the subtle parameters that define your experience. Every setting follows the principle of quiet restraint.</p>
+        </div>
+      </div>
+      <div class="rounded-2xl border border-[#3d4a5c]/8 overflow-hidden">
+        <button class="accordion-btn w-full flex items-center justify-between px-6 py-4 text-left text-sm font-light text-[#3d4a5c] tracking-wide hover:bg-[#3d4a5c]/3 transition-colors duration-500" aria-expanded="false">
+          API Reference
+          <svg class="chevron w-3.5 h-3.5 text-[#3d4a5c]/30" viewBox="0 0 14 8" fill="none"><path d="M1 1l6 6 6-6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="accordion-content px-6 pb-4">
+          <p class="text-xs text-[#3d4a5c]/45 font-light leading-relaxed">Explore the clean, minimal API surface designed for graceful interaction patterns.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Tabs
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('text-[#3d4a5c]', 'border-[#3d4a5c]');
+        b.classList.add('text-[#3d4a5c]/30', 'border-transparent');
+        b.setAttribute('aria-selected', 'false');
+      });
+      btn.classList.remove('text-[#3d4a5c]/30', 'border-transparent');
+      btn.classList.add('text-[#3d4a5c]', 'border-[#3d4a5c]');
+      btn.setAttribute('aria-selected', 'true');
+      document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // Accordion
+  document.querySelectorAll('.accordion-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const content = btn.nextElementSibling;
+      const chevron = btn.querySelector('.chevron');
+      const isOpen = content.classList.contains('open');
+      content.classList.toggle('open');
+      chevron.classList.toggle('open');
+      btn.setAttribute('aria-expanded', !isOpen);
+    });
+  });
+</script>
+</body>
+</html>

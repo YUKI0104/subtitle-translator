@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+"""List all 4 categories with style counts from StyleKit data (bundled)."""
+
+import json
+from pathlib import Path
+
+DATA_PATH = Path(__file__).parent.parent / "references" / "style-prompts.txt"
+
+CAT_LABELS = {
+    "expressive": "Expressive（表现力）— 视觉冲击、艺术化、大胆独特",
+    "modern": "Modern（现代）— 潮流界面、玻璃拟态、暗黑模式、仪表盘",
+    "retro": "Retro（复古）— 像素、合成波、孟菲斯、千禧美学",
+    "minimal": "Minimal（极简）— 侘寂、北欧、留白、禅意",
+}
+
+def main():
+    if not DATA_PATH.exists():
+        print(f"ERROR: StyleKit data not found at {DATA_PATH}")
+        return
+
+    with open(DATA_PATH, encoding="utf-8") as f:
+        data = json.load(f)
+
+    styles = data["styles"]
+    cats = {}
+    for s in styles:
+        cat = s.get("category", "other")
+        cats.setdefault(cat, 0)
+        cats[cat] += 1
+
+    for cat in ["expressive", "modern", "retro", "minimal"]:
+        count = cats.get(cat, 0)
+        label = CAT_LABELS.get(cat, cat)
+        print(f"[{cat}] {label} — {count} 种风格")
+
+    print(f"\n总计: {len(styles)} 种风格")
+
+if __name__ == "__main__":
+    main()

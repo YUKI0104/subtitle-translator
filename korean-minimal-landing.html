@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Korean Minimal — Brand Experience</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500&display=swap');
+  * { font-family: 'Noto Sans KR', 'Pretendard', sans-serif; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  }
+  *:focus-visible {
+    outline: 2px solid rgba(212,165,165,0.4);
+    outline-offset: 2px;
+    border-radius: 12px;
+  }
+  html { scroll-behavior: smooth; }
+</style>
+</head>
+<body class="bg-[#faf9f7]">
+
+  <!-- Skip to content -->
+  <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-6 focus:py-3 focus:bg-[#faf9f7] focus:text-[#3d4a5c] focus:rounded-2xl focus:border focus:border-[#3d4a5c]/10 focus:shadow-sm focus:font-light focus:tracking-wide">Skip to content</a>
+
+  <!-- Navigation -->
+  <header class="fixed top-0 left-0 w-full z-40 bg-[#faf9f7]/90 backdrop-blur-sm border-b border-[#3d4a5c]/8">
+    <nav class="max-w-5xl mx-auto px-8 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-2 h-2 rounded-full bg-[#3d4a5c]/20"></div>
+        <span class="text-sm font-light text-[#3d4a5c] tracking-wide">Korean Minimal</span>
+      </div>
+      <div class="hidden md:flex items-center gap-8">
+        <a href="#features" class="text-xs font-light text-[#3d4a5c]/40 tracking-wide hover:text-[#3d4a5c]/60 transition-colors duration-500">Features</a>
+        <a href="#stats" class="text-xs font-light text-[#3d4a5c]/40 tracking-wide hover:text-[#3d4a5c]/60 transition-colors duration-500">Insights</a>
+        <a href="#cta" class="text-xs font-light text-[#3d4a5c]/40 tracking-wide hover:text-[#3d4a5c]/60 transition-colors duration-500">Contact</a>
+      </div>
+      <button class="px-6 py-2 bg-[#3d4a5c] text-[#faf9f7] text-xs font-light tracking-wide rounded-2xl border border-[#3d4a5c]/10 shadow-sm hover:shadow-md hover:bg-[#3d4a5c]/90 transition-all duration-700 ease-in-out">
+        Get Started
+      </button>
+      <!-- Mobile menu button -->
+      <button class="md:hidden flex flex-col gap-1 p-2" aria-label="Menu" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+        <span class="block w-5 h-px bg-[#3d4a5c]/40"></span>
+        <span class="block w-5 h-px bg-[#3d4a5c]/40"></span>
+        <span class="block w-5 h-px bg-[#3d4a5c]/40"></span>
+      </button>
+    </nav>
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="hidden md:hidden px-8 pb-6 pt-2 space-y-4">
+      <a href="#features" class="block text-xs font-light text-[#3d4a5c]/40 tracking-wide" onclick="document.getElementById('mobile-menu').classList.add('hidden')">Features</a>
+      <a href="#stats" class="block text-xs font-light text-[#3d4a5c]/40 tracking-wide" onclick="document.getElementById('mobile-menu').classList.add('hidden')">Insights</a>
+      <a href="#cta" class="block text-xs font-light text-[#3d4a5c]/40 tracking-wide" onclick="document.getElementById('mobile-menu').classList.add('hidden')">Contact</a>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <!-- Hero -->
+    <section class="min-h-screen flex items-center justify-center bg-[#faf9f7] relative px-6">
+      <div class="absolute top-24 right-16 md:top-32 md:right-28 w-3 h-3 rounded-full bg-[#d4a5a5]/25"></div>
+      <div class="absolute bottom-32 left-20 w-2 h-2 rounded-full bg-[#a8c5b8]/20"></div>
+      <div class="relative z-10 text-center max-w-2xl mx-auto pt-24">
+        <div class="w-12 h-px bg-[#3d4a5c]/15 mx-auto mb-14"></div>
+        <h1 class="text-4xl md:text-6xl font-light text-[#3d4a5c] mb-8 tracking-wide leading-tight">
+          The Beauty of<br class="hidden sm:block"> Restraint
+        </h1>
+        <p class="text-base text-[#3d4a5c]/40 mb-14 leading-relaxed max-w-md mx-auto font-light tracking-wide">
+          Where every element has room to breathe. Korean Minimal brings warmth to simplicity through quiet elegance and deliberate pace.
+        </p>
+        <div class="flex items-center justify-center gap-4 flex-wrap">
+          <button class="px-10 py-3.5 bg-[#3d4a5c] text-[#faf9f7] font-light tracking-wide rounded-2xl shadow-sm hover:shadow-md hover:bg-[#3d4a5c]/90 transition-all duration-700 ease-in-out">
+            Discover More
+          </button>
+          <a href="#features" class="px-6 py-3.5 text-sm font-light text-[#3d4a5c]/40 tracking-wide hover:text-[#3d4a5c]/60 transition-colors duration-500">
+            Learn More
+          </a>
+        </div>
+        <div class="w-12 h-px bg-[#3d4a5c]/15 mx-auto mt-14"></div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="py-28 px-6 bg-[#faf9f7]">
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-20">
+          <div class="w-8 h-px bg-[#d4a5a5]/60 mx-auto mb-8"></div>
+          <h2 class="text-3xl md:text-4xl font-light text-[#3d4a5c] tracking-wide leading-tight mb-4">
+            Designed with Intention
+          </h2>
+          <p class="text-sm text-[#3d4a5c]/35 font-light tracking-wide">
+            Every detail serves a purpose. Nothing is added without reason.
+          </p>
+        </div>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Feature 1 -->
+          <div class="group p-10 bg-[#faf9f7] rounded-2xl border border-[#3d4a5c]/10 shadow-[0_8px_24px_rgba(232,212,184,0.14)] hover:-translate-y-0.5 hover:shadow-[0_24px_50px_rgba(212,165,165,0.16)] transition-all duration-1000 ease-in-out">
+            <div class="w-6 h-px bg-[#d4a5a5]/80 mb-6"></div>
+            <h3 class="text-lg font-light text-[#3d4a5c] mb-3 tracking-wide group-hover:text-[#2f3946] transition-colors duration-700">Whitespace</h3>
+            <p class="text-xs text-[#3d4a5c]/50 leading-relaxed font-light group-hover:text-[#3d4a5c]/65 transition-colors duration-700">Generous breathing room around every element. Content emerges naturally from the stillness.</p>
+          </div>
+          <!-- Feature 2 -->
+          <div class="group p-10 bg-[#faf9f7] rounded-2xl border border-[#3d4a5c]/10 shadow-[0_8px_24px_rgba(232,212,184,0.14)] hover:-translate-y-0.5 hover:shadow-[0_24px_50px_rgba(212,165,165,0.16)] transition-all duration-1000 ease-in-out">
+            <div class="w-6 h-px bg-[#d4a5a5]/80 mb-6"></div>
+            <h3 class="text-lg font-light text-[#3d4a5c] mb-3 tracking-wide group-hover:text-[#2f3946] transition-colors duration-700">Soft Palette</h3>
+            <p class="text-xs text-[#3d4a5c]/50 leading-relaxed font-light group-hover:text-[#3d4a5c]/65 transition-colors duration-700">Warm whites, slate blues, and pastel accents create a calm, inviting atmosphere.</p>
+          </div>
+          <!-- Feature 3 -->
+          <div class="group p-10 bg-[#faf9f7] rounded-2xl border border-[#3d4a5c]/10 shadow-[0_8px_24px_rgba(232,212,184,0.14)] hover:-translate-y-0.5 hover:shadow-[0_24px_50px_rgba(212,165,165,0.16)] transition-all duration-1000 ease-in-out">
+            <div class="w-6 h-px bg-[#d4a5a5]/80 mb-6"></div>
+            <h3 class="text-lg font-light text-[#3d4a5c] mb-3 tracking-wide group-hover:text-[#2f3946] transition-colors duration-700">Gentle Motion</h3>
+            <p class="text-xs text-[#3d4a5c]/50 leading-relaxed font-light group-hover:text-[#3d4a5c]/65 transition-colors duration-700">Slow, deliberate transitions at 700ms ease-in-out. Every movement feels natural and unhurried.</p>
+          </div>
+          <!-- Feature 4 -->
+          <div class="group p-10 bg-[#faf9f7] rounded-2xl border border-[#3d4a5c]/10 shadow-[0_8px_24px_rgba(232,212,184,0.14)] hover:-translate-y-0.5 hover:shadow-[0_24px_50px_rgba(212,165,165,0.16)] transition-all duration-1000 ease-in-out">
+            <div class="w-6 h-px bg-[#d4a5a5]/80 mb-6"></div>
+            <h3 class="text-lg font-light text-[#3d4a5c] mb-3 tracking-wide group-hover:text-[#2f3946] transition-colors duration-700">Thin Lines</h3>
+            <p class="text-xs text-[#3d4a5c]/50 leading-relaxed font-light group-hover:text-[#3d4a5c]/65 transition-colors duration-700">Ultra-fine borders and dividers at 8-10% opacity define structure without weight.</p>
+          </div>
+          <!-- Feature 5 -->
+          <div class="group p-10 bg-[#faf9f7] rounded-2xl border border-[#3d4a5c]/10 shadow-[0_8px_24px_rgba(232,212,184,0.14)] hover:-translate-y-0.5 hover:shadow-[0_24px_50px_rgba(212,165,165,0.16)] transition-all duration-1000 ease-in-out">
+            <div class="w-6 h-px bg-[#d4a5a5]/80 mb-6"></div>
+            <h3 class="text-lg font-light text-[#3d4a5c] mb-3 tracking-wide group-hover:text-[#2f3946] transition-colors duration-700">Micro Lift</h3>
+            <p class="text-xs text-[#3d4a5c]/50 leading-relaxed font-light group-hover:text-[#3d4a5c]/65 transition-colors duration-700">Subtle hover elevation at -translate-y-0.5. Just enough to acknowledge interaction.</p>
+          </div>
+          <!-- Feature 6 -->
+          <div class="group p-10 bg-[#faf9f7] rounded-2xl border border-[#3d4a5c]/10 shadow-[0_8px_24px_rgba(232,212,184,0.14)] hover:-translate-y-0.5 hover:shadow-[0_24px_50px_rgba(212,165,165,0.16)] transition-all duration-1000 ease-in-out">
+            <div class="w-6 h-px bg-[#d4a5a5]/80 mb-6"></div>
+            <h3 class="text-lg font-light text-[#3d4a5c] mb-3 tracking-wide group-hover:text-[#2f3946] transition-colors duration-700">Delicate Touch</h3>
+            <p class="text-xs text-[#3d4a5c]/50 leading-relaxed font-light group-hover:text-[#3d4a5c]/65 transition-colors duration-700">Inspired by K-beauty product design. Every interaction feels refined and considered.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stats -->
+    <section id="stats" class="py-28 px-6 bg-[#faf9f7] border-t border-[#3d4a5c]/8">
+      <div class="max-w-3xl mx-auto">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-10 text-center">
+          <div>
+            <p class="text-4xl font-light text-[#3d4a5c] tracking-wide">120</p>
+            <p class="text-xs text-[#3d4a5c]/35 font-light tracking-wide mt-2">Design Styles</p>
+          </div>
+          <div>
+            <p class="text-4xl font-light text-[#3d4a5c] tracking-wide">17</p>
+            <p class="text-xs text-[#3d4a5c]/35 font-light tracking-wide mt-2">Minimal Variants</p>
+          </div>
+          <div>
+            <p class="text-4xl font-light text-[#3d4a5c] tracking-wide">48k</p>
+            <p class="text-xs text-[#3d4a5c]/35 font-light tracking-wide mt-2">Design Tokens</p>
+          </div>
+          <div>
+            <p class="text-4xl font-light text-[#3d4a5c] tracking-wide">14</p>
+            <p class="text-xs text-[#3d4a5c]/35 font-light tracking-wide mt-2">Core Components</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section id="cta" class="py-28 px-6 bg-[#faf9f7]">
+      <div class="max-w-xl mx-auto text-center">
+        <div class="w-8 h-px bg-[#d4a5a5]/60 mx-auto mb-8"></div>
+        <h2 class="text-3xl md:text-4xl font-light text-[#3d4a5c] tracking-wide leading-tight mb-6">
+          Begin with Stillness
+        </h2>
+        <p class="text-sm text-[#3d4a5c]/35 font-light tracking-wide mb-10 leading-relaxed">
+          Experience the quiet elegance of Korean Minimal. Let your design breathe with warmth and intention.
+        </p>
+        <div class="flex items-center justify-center gap-4 flex-wrap">
+          <button class="px-10 py-3.5 bg-[#3d4a5c] text-[#faf9f7] font-light tracking-wide rounded-2xl shadow-sm hover:shadow-md hover:bg-[#3d4a5c]/90 transition-all duration-700 ease-in-out">
+            Get Started
+          </button>
+          <a href="#" class="px-6 py-3.5 text-sm font-light text-[#3d4a5c]/40 tracking-wide hover:text-[#3d4a5c]/60 transition-colors duration-500">
+            View Gallery
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="py-20 px-6 border-t border-[#3d4a5c]/8">
+    <div class="max-w-4xl mx-auto">
+      <div class="grid md:grid-cols-4 gap-10 mb-16">
+        <div>
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-2 h-2 rounded-full bg-[#3d4a5c]/20"></div>
+            <span class="text-xs font-light text-[#3d4a5c] tracking-wide">Korean Minimal</span>
+          </div>
+          <p class="text-[10px] text-[#3d4a5c]/30 font-light leading-relaxed tracking-wide">Where warmth meets simplicity.</p>
+        </div>
+        <div>
+          <h4 class="text-[10px] font-light text-[#3d4a5c]/50 tracking-wide mb-4">Product</h4>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-[10px] font-light text-[#3d4a5c]/30 hover:text-[#3d4a5c]/50 transition-colors duration-500 tracking-wide">Overview</a></li>
+            <li><a href="#" class="text-[10px] font-light text-[#3d4a5c]/30 hover:text-[#3d4a5c]/50 transition-colors duration-500 tracking-wide">Features</a></li>
+            <li><a href="#" class="text-[10px] font-light text-[#3d4a5c]/30 hover:text-[#3d4a5c]/50 transition-colors duration-500 tracking-wide">Pricing</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-[10px] font-light text-[#3d4a5c]/50 tracking-wide mb-4">Company</h4>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-[10px] font-light text-[#3d4a5c]/30 hover:text-[#3d4a5c]/50 transition-colors duration-500 tracking-wide">About</a></li>
+            <li><a href="#" class="text-[10px] font-light text-[#3d4a5c]/30 hover:text-[#3d4a5c]/50 transition-colors duration-500 tracking-wide">Blog</a></li>
+            <li><a href="#" class="text-[10px] font-light text-[#3d4a5c]/30 hover:text-[#3d4a5c]/50 transition-colors duration-500 tracking-wide">Careers</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-[10px] font-light text-[#3d4a5c]/50 tracking-wide mb-4">Legal</h4>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-[10px] font-light text-[#3d4a5c]/30 hover:text-[#3d4a5c]/50 transition-colors duration-500 tracking-wide">Privacy</a></li>
+            <li><a href="#" class="text-[10px] font-light text-[#3d4a5c]/30 hover:text-[#3d4a5c]/50 transition-colors duration-500 tracking-wide">Terms</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="text-center">
+        <div class="w-16 h-px bg-[#3d4a5c]/8 mx-auto mb-6"></div>
+        <p class="text-[10px] font-light text-[#3d4a5c]/20 tracking-wide">&copy; 2026 Korean Minimal. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

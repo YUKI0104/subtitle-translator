@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+"""List all styles within a given category (bundled data)."""
+
+import json
+import sys
+from pathlib import Path
+
+DATA_PATH = Path(__file__).parent.parent / "references" / "style-prompts.txt"
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: list_styles.py <category>")
+        print("Categories: expressive, modern, retro, minimal")
+        return
+
+    cat = sys.argv[1].lower()
+    if cat not in ("expressive", "modern", "retro", "minimal"):
+        print(f"Unknown category: {cat}")
+        print("Valid: expressive, modern, retro, minimal")
+        return
+
+    if not DATA_PATH.exists():
+        print(f"ERROR: StyleKit data not found at {DATA_PATH}")
+        return
+
+    with open(DATA_PATH, encoding="utf-8") as f:
+        data = json.load(f)
+
+    styles = data["styles"]
+    matched = [s for s in styles if s.get("category") == cat]
+
+    for i, s in enumerate(matched, 1):
+        name = s["name"]
+        slug = s["slug"]
+        tags = s.get("tags", [])
+        tag_str = ", ".join(tags[:3])
+        print(f"  {i:2d}. [{slug}] {name}  ({tag_str})")
+
+    print(f"\n类别 [{cat}] 共 {len(matched)} 种风格，请输入编号或 slug 选择。")
+
+if __name__ == "__main__":
+    main()
