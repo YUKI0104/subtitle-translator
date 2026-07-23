@@ -2735,13 +2735,36 @@ function renderDashboardPanel(body, title, actions) {
   html += '<div class="detail-item"><span class="detail-label">作业效率</span><span class="detail-val">' + (efficiency ? efficiency.toLocaleString() : '——') + ' 分钟/天</span></div>';
   html += '</div>';
 
+  // Project list for switching
+  if (state.projects.length > 1) {
+    html += '<div class="dash-section-title" style="margin-top:16px"><i class="ri-swap-line"></i> 切换项目</div>';
+    for (var pi = 0; pi < state.projects.length; pi++) {
+      var p = state.projects[pi];
+      var isActive = pi === state.activeProjectIdx;
+      var epCount = p.episodes ? p.episodes.length : 0;
+      html += '<div class="' + (isActive ? 'ep-card active' : 'ep-card') + '" onclick="switchProject(' + pi + ')" style="margin-bottom:4px;padding:8px 10px">' +
+        '<div style="display:flex;align-items:center;gap:8px">' +
+        (isActive ? '<span style="font-size:14px">📍</span>' : '<span style="font-size:14px">📁</span>') +
+        '<span style="flex:1;font-size:13px;font-weight:' + (isActive ? '600' : '400') + '">' + escHtml(p.name) + '</span>' +
+        '<span style="font-size:11px;color:var(--text-dim)">' + epCount + ' 集</span>' +
+        (isActive ? '<span style="font-size:10px;color:var(--accent);background:var(--ep-active-bg);padding:2px 8px;border-radius:999px">当前</span>' : '') +
+        '</div></div>';
+    }
+  }
+
   body.innerHTML = html;
 }
 
 function switchProject(idx) {
   if (idx === state.activeProjectIdx) return;
   state.activeProjectIdx = idx;
-  state.activeEpisodeIdx = -1;
+  // Auto-select first episode if available
+  var proj = activeProject();
+  if (proj && proj.episodes.length > 0) {
+    state.activeEpisodeIdx = 0;
+  } else {
+    state.activeEpisodeIdx = -1;
+  }
   state.currentSubIdx = -1;
   markDirty();
   renderAll();
